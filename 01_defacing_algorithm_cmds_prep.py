@@ -1,6 +1,8 @@
 from os import fspath
 from pathlib import Path
 
+import constants
+
 
 def write_cmds_to_file(cmds_list, filepath):
     with open(filepath, 'w') as f:
@@ -38,14 +40,8 @@ def generate_cmds(output_dir, modality, scans_list):
 
 
 def main():
-    bids_root = Path('/data/BrainBlocks/joyce/bids')
-    outputs_root = Path(
-        '/data/NIMH_scratch/hv_protocol/defacing_comparisons/new_algorithm')
-
-    t1w_scans = list(bids_root.glob('sub-*/ses-*/anat/*run-01*T1w.nii.gz'))
-
     # generate bash commands and write to swarm file
-    defacing_cmds = generate_cmds(outputs_root, 'anat', t1w_scans)
+    defacing_cmds = generate_cmds(constants.OUTPUTS_DIR, 'anat', constants.T1W_SCANS)
     write_cmds_to_file(defacing_cmds, 'new_algorithm_part1.swarm')
 
 
