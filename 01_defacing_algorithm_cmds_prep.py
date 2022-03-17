@@ -15,18 +15,19 @@ def generate_cmds(output_dir, modality, scans_list):
     for scan in scans_list:
         entities = scan.name.split('_')
         subj_outdir = output_dir.joinpath(entities[0], entities[1], modality)
-
-        # make output directories within subject directory for afni_refacer, fsl_bet and fsl_anat outputs
-        fa_outdir = subj_outdir / 'fsl_anat'
-        ar_outdir = subj_outdir / 'afni_refacer'
-        fb_outdir = subj_outdir / 'fsl_bet'
-        mkdir_cmds = f"mkdir -p {fa_outdir} {ar_outdir} {fb_outdir}"
+        acq = entities[2].split('-')[1]
 
         # filename without the extensions
         prefix = scan.name.split('.')[0]
 
+        # make output directories within subject directory for afni_refacer, fsl_bet and fsl_anat outputs
+        fa_outdir = subj_outdir / 'fsl_anat' / acq
+        ar_outdir = subj_outdir / 'afni_refacer' / acq
+        fb_outdir = subj_outdir / 'fsl_bet' / acq
+        mkdir_cmds = f"mkdir -p {fa_outdir} {ar_outdir} {fb_outdir}"
+
         # individual commands
-        fa_cmd = f"fsl_anat -o {subj_outdir} --nocleanup -i {scan}"
+        fa_cmd = f"fsl_anat -o {fa_outdir} --nocleanup -i {scan}"
         ar_cmd = f"@afni_refacer_run -input {scan} -mode_deface -no_clean -prefix {fspath(ar_outdir.joinpath(prefix))}"
         fb_cmd = f"bet {scan} {fb_outdir.joinpath(prefix + '_bet.nii.gz')} -S -d"
 
@@ -42,7 +43,7 @@ def generate_cmds(output_dir, modality, scans_list):
 def main():
     # generate bash commands and write to swarm file
     defacing_cmds = generate_cmds(constants.OUTPUTS_DIR, 'anat', constants.T1W_SCANS)
-    write_cmds_to_file(defacing_cmds, 'new_algorithm_part1.swarm')
+    write_cmds_to_file(defacing_cmds, 'new_algorithm_v2.swarm')
 
 
 if __name__ == "__main__":
