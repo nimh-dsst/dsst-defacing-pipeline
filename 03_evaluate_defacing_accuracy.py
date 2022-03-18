@@ -28,13 +28,13 @@ def get_bm_overlap_fm_stats(brainmask, facemask):
     return float(voxels), float(volume)
 
 
-def get_ifm_minus_dil_em_stats(facemask, dil_em):
+def get_fm_minus_dil_em_stats(facemask, dil_em):
     stats_cmd = f"fslstats {facemask} -k {dil_em} -V"
     voxels, volume = run_command(stats_cmd).split(' ')
     return float(voxels), float(volume)
 
 
-def get_ifm_minus_em_stats(facemask, em):
+def get_fm_minus_em_stats(facemask, em):
     stats_cmd = f"fslstats {facemask} -k {em} -V"
     voxels, volume = run_command(stats_cmd).split(' ')
     return float(voxels), float(volume)
@@ -58,19 +58,19 @@ def main():
         # outdirs for intermediate files
         fa_outdir = constants.OUTPUTS_DIR.joinpath(subjid, 'ses-01', 'anat', 'fsl_anat', acq + '.anat')
         ar_outdir = constants.OUTPUTS_DIR.joinpath(subjid, 'ses-01', 'anat', 'afni_refacer', acq)
-        ar_wrkdir = ar_outdir.joinpath('__work*')
 
         # dilated brainmask in orig space
         brainmask = fa_outdir.parent.joinpath(acq + '_dil15box2orig.nii.gz')
 
         try:
-            print(subjid)
+            ar_wrkdir = list(ar_outdir.glob('__work*'))[0]
+            print(subjid, acq)
 
             df.at[idx, 'subject_id'] = subjid
-            df.at[idx, 'acq'] = acq
+            df.at[idx, 'acquisition'] = acq
 
             # brainmask stats
-            df.at[idx, 'brainmask_voxels'], df.at[idx, 'brainmask_volume'] = get_bm_stats(brainmask)
+            df.at[idx, 'brainmask_voxels'], df.at[idx, 'brainmask_volume'] = get_brainmask_stats(brainmask)
 
             # facemask stats
             facemask = ar_wrkdir.joinpath('afni_facemask_binarized.nii.gz')
@@ -85,18 +85,18 @@ def main():
             df.at[idx, "pc_overlap_bw_facemask_and_brainmask"] = df.at[idx, "brainmask_overlap_facemask_voxels"] / \
                                                                  df.at[idx, 'brainmask_voxels']
 
-            # modified eyemasks, i.e., eyemasks that don't overlap with brainmask, and their overlap with facemask
+            # modified eyemasks, (no overlap with brain mask) and it's overlap with facemask
             dil_em_mod = constants.OUTPUTS_DIR.joinpath(subjid, 'ses-01', 'anat',
                                                         prefix + '_modified_dil_eye_mask.nii.gz')
             em_mod = constants.OUTPUTS_DIR.joinpath(subjid, 'ses-01', 'anat', prefix + '_modified_eye_mask.nii.gz')
             df.at[idx, "leftover_dil_eyemask_voxels"], df.at[
-                idx, "leftover_dil_eyemask_volume"] = get_ifm_minus_dil_em_stats(facemask, dil_em_mod)
+                idx, "leftover_dil_eyemask_volume"] = get_fm_minus_dil_em_stats(facemask, dil_em_mod)
 
             df.at[idx, "leftover_eyemask_voxels"], df.at[
-                idx, "leftover_eyemask_volume"] = get_ifm_minus_em_stats(facemask, em_mod)
+                idx, "leftover_eyemask_volume"] = get_fm_minus_em_stats(facemask, em_mod)
 
             print(df.loc[idx, :].tolist())
-            print('done')
+            print("done.\n")
             idx += 1
         except:
             pass
