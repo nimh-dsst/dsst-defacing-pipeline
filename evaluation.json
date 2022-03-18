@@ -8,13 +8,15 @@
     "DataType": "string"
   },
   "brainmask_voxels": {
-    "Description": "Count of non-zero voxels in dilated brain mask."
+    "Description": "Count of non-zero voxels in dilated brain mask.",
+    "Notes": "One of the outputs from fsl_anat. To be sure that the mask covers the entire brain region, it's been dilated using 20 mm box kernel available with fslmaths program."
   },
   "brainmask_volume": {
     "Description": "Volume of non-zero voxels in dilated brain mask."
   },
   "facemask_voxels": {
-    "Description": "Count of non-zero voxels in the facemask."
+    "Description": "Count of non-zero voxels in the facemask.",
+    "Notes": "One of afni_refacer's intermediate files named tmp.05.sh_t2a_thr.nii contains two brain mri volumes. The 2nd volume is a grayscale image/scan of the participant's face, which was extracted and binarized to generate the facemask."
   },
   "facemask_volume": {
     "Description": "Volume of non-zero voxels in the facemask."},
@@ -29,17 +31,12 @@
     "Reason for expected value": "Same as above."
   },
   "pc_overlap_bw_facemask_and_brainmask": {
-    "Description": "Percentage of non-zero voxels overlapping between facemask and the dilated brain mask."
+    "Description": "Percentage of non-zero voxels overlapping between facemask and the dilated brain mask.",
+    "Notes": "This measure was calculated by dividing brainmask_overlap_facemask_voxels by the number of non-zero voxels in the brain mask, aka, brainmask_voxels."
   },
-  "leftover_dil_eyemask_voxels": {
-    "Description": "Count of non-zero voxels that's leftover in the dilated eyemask after being masked out by the brain mask and the face mask."
-  },
-  "leftover_dil_eyemask_volume": {
-    "Description": "Volume of non-zero voxels that's leftover in the dilated eyemask after being masked out by the brain mask and the face mask."
-  },
-
   "leftover_eyemask_voxels": {
-    "Description": "Count of non-zero voxels that's leftover in the eyemask after being masked out by the brain mask and the face mask."
+    "Description": "Count of non-zero voxels that's leftover in the eyemask after being masked out by the brain mask and the face mask.",
+    "Notes":"This is a measure of number of voxels in the eyemask that doesn't overlap with the brainmask and hasn't been removed by afni_refacer's defacing algorithm."
   },
   "leftover_eyemask_volume": {
     "Description": "Volume of non-zero voxels that's leftover in the eyemask after being masked out by the brain mask and the face mask."
