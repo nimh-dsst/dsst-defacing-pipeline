@@ -3,10 +3,9 @@ import json
 import subprocess
 import time
 
+import constants
 import numpy as np
 import pandas as pd
-
-import constants
 
 
 def run_command(cmdstr):
