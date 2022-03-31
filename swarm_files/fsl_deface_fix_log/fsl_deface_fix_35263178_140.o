@@ -1,0 +1,27 @@
+[-] Unloading FSL 6.0.4  ... 
+[+] Loading FSL 6.0.4  ... 
+---- COMMAND EXECUTED: ---------------------------------------------------------
+(   /data/DSST/scripts/fsl_deface_fix /data/NIMH_scratch/defacing_comparisons/hv_protocol/bids/sub-ON05258/ses-01/anat/sub-ON05258_ses-01_acq-fse_run-01_T1w.nii.gz /data/NIMH_scratch/defacing_comparisons/hv_protocol/defacing_outputs/sub-ON05258/ses-01/anat/fse/fsl/fsl_deface_fix/sub-ON05258_ses-01_acq-fse_run-01_T1w_deface -d /data/NIMH_scratch/defacing_comparisons/hv_protocol/defacing_outputs/sub-ON05258/ses-01/anat/fse/fsl/fsl_deface_fix/sub-ON05258_ses-01_acq-fse_run-01_T1w_defacing_mask -n /data/NIMH_scratch/defacing_comparisons/hv_protocol/defacing_outputs/sub-ON05258/ses-01/anat/fse/fsl/fsl_deface_fix/sub-ON05258_ses-01_acq-fse_run-01_T1w_cropped_struc -m13 /data/NIMH_scratch/defacing_comparisons/hv_protocol/defacing_outputs/sub-ON05258/ses-01/anat/fse/fsl/fsl_deface_fix/sub-ON05258_ses-01_acq-fse_run-01_T1w_orig_2_std -m12 /data/NIMH_scratch/defacing_comparisons/hv_protocol/defacing_outputs/sub-ON05258/ses-01/anat/fse/fsl/fsl_deface_fix/sub-ON05258_ses-01_acq-fse_run-01_T1w_orig_2_cropped -m23 /data/NIMH_scratch/defacing_comparisons/hv_protocol/defacing_outputs/sub-ON05258/ses-01/anat/fse/fsl/fsl_deface_fix/sub-ON05258_ses-01_acq-fse_run-01_T1w_cropped_2_std -B -p screenshot )
+--------------------------------------------------------------------------------
+
+Usage: fsl_deface_fix <input> <output> 
+
+       Tool to deface a structural T1w image.
+
+Options:
+
+  -k                     apply the defacing to the cropped image instead of the original image
+  -d <defacing_mask>     filename to save the defacing mask;
+  -n <cropped_struc>     filename to save the new cropped struct;
+  -m13 <orig_2_std>      filename to save affine matrix from original struct to std;
+  -m12 <orig_2_cropped>  filename to save affine matrix from original struct to cropped struct;
+  -m23 <cropped_2_std>   filename to save affine matrix from cropped struct to std;
+  -nud <x y z>           Shift, in mm, x-, y- and z-directions, to shift face mask by;
+                         (These matrices will only work if the input has been previously reoriented to std)
+  -f <f>                 fractional intensity for bet (0->1); default=0.5; 
+  -B                     Bias-correct the input image (with fast);
+  -c <x y z>             centre-of-gravity for bet (voxels, not mm);
+  -p <images_baseName>   generate 2 pngs to show how the defacing worked for QC purposes
+
+Error: The input image has an incorrect alignment. The defacing will not work on this image.
+       Please, run fslreorient2std /data/NIMH_scratch/defacing_comparisons/hv_protocol/bids/sub-ON05258/ses-01/anat/sub-ON05258_ses-01_acq-fse_run-01_T1w.nii.gz before running fsl_deface.
