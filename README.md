@@ -1,12 +1,22 @@
-# dsst-defacing-sop
+# DSST SoP for Defacing Anatomical scans
 
 [defacing algorithm notes](https://docs.google.com/presentation/d/1-eNBUjRG89kgq1sxaphNEqWQ3KZQ0kpeCfGQprqlqWo/edit#slide=id.g116908c6bac_0_0)
 
-# BASH Commands
+# bash commands
 
 Following is a list of useful commands that were used in the process of defacing.
  
 ## 3D render using `fsl_gen_3D`
+
+
+```bash
+$ fsl_gen_3D
+
+Usage: fsl_gen_3D <input> <output> 
+
+       Tool to generate a 3D snapshot of a structural image.
+```
+Example command to generate 3D renders for a given dataset
 
 ```bash
 for IN in `ls sub-*/*/anat/*/afni/refacer/__work*/tmp.99.result.deface.nii`; do \
