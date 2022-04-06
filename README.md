@@ -24,6 +24,15 @@ OUT=$(echo $IN | sed "s|.nii|.render|g"); fsl_gen_3D $IN $OUT; \
 done;
 ```
 
+## 3D render using `fsleyes render`
+
+`fsleyes render` offers more flexibility compared to `fsl_gen_3D`. 
+
+```bash 
+fsleyes render --scene 3d --rot 45 0 90 --outfile ${OUT}.png ${INPUT}.nii.gz -dr 30 250 -cr 30 500 -in spline -bf 0.225 -r 100 -ns 500
+```
+
+
 
 # References -
 
