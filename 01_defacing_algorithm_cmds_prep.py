@@ -125,7 +125,7 @@ def registration(output_dir, anat_dirs, t1_list, non_t1_list):
 def main():
     # generate commands
     input, output = get_args()
-    
+
     # @TODO this needs to be a regular expression search
     t1_set = set(list(input.glob('sub-*/ses-*/anat/*_run-*1_*T1w.nii.gz')))
     non_t1_set = set(list(input.glob('sub-*/ses-*/anat/*.nii.gz'))) - t1_set
@@ -135,10 +135,9 @@ def main():
     defacing_cmds = deface(output, 'anat', list(t1_set))
     write_cmds_to_file(defacing_cmds, f'defacing_commands_{input.parent.name}.swarm')
 
-   # write registration commands to a swarm file
+    # write registration commands to a swarm file
     registration_cmds = registration(output, anat_dirs, list(t1_set), list(non_t1_set))
     write_cmds_to_file(registration_cmds, f'registration_commands_{input.parent.name}.swarm')
-
 
 
 if __name__ == "__main__":
