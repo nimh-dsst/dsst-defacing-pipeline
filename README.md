@@ -32,6 +32,19 @@ done;
 fsleyes render --scene 3d --rot 45 0 90 --outfile ${OUT}.png ${INPUT}.nii.gz -dr 30 250 -cr 30 500 -in spline -bf 0.225 -r 100 -ns 500
 ```
 
+## Resampling scans into 1mm isotropic images for visualqc
+
+```bash
+for i in `cat as_visualqc_arsh.txt`; do 
+ for j in `ls $i/{tmp.00.INPUT.nii,tmp.99.result.deface.nii}`; do 
+  INPUT=$j; 
+  OUTPUT=$(echo $j | sed "s|.nii|_iso_1mm|g"); 
+  flirt -interp nearestneighbour -in ${INPUT} -ref ${INPUT} -applyisoxfm 1 -out ${OUTPUT}; 
+ done; 
+done;
+```
+
+
 
 
 # References -
