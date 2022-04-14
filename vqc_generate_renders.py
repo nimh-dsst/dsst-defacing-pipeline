@@ -6,12 +6,12 @@ from pathlib import Path
 
 def get_args():
     parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument('-in', action='store', type=Path,
+                        dest='inputdir', help='Path to input directory.')
     parser.add_argument('-rotations', action='store', type=str,
                         dest='rots', help='Path to text file with rotations.')
     parser.add_argument('-vqc_ids', action='store', type=Path,
                         dest='idlist', help='Path to visualqc id_list file.')
-    parser.add_argument('-in', action='store', type=Path,
-                        dest='inputdir', help='Path to input directory.')
 
     return parser.parse_args()
 

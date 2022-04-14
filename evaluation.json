@@ -16,12 +16,6 @@
   "brainmask_overlap_facemask_voxels": {
     "Description": "Count of non-zero voxels in overlapping region between the facemask and dilated brain mask.",
     "Expected Value": "Zero",
-    "Reason for expected value": "Overlap between brain mask and face mask indicates that afni_refacer chopped off some of the brain along with the face. However, it could also indicate that fsl_anat's brain mask doesn't accurately map onto the participant's brain. Either way, such a participant's defacing would be considered to have failed."
-  },
-  "leftover_eyemask_voxels": {
-    "Description": "Count of non-zero voxels that's leftover in the eyemask after being masked out by the brain mask and the face mask."
-  },
-  "leftover_eyemask_volume": {
-    "Description": "Volume of non-zero voxels that's leftover in the eyemask after being masked out by the brain mask and the face mask."
+    "Reason for expected value": "Overlap between brain mask and face mask indicates that afni_refacer chopped off some of the brain along with facial features. However, it could also indicate that afni 3D skullstrips' brain mask doesn't accurately map onto the participant's brain. Either way, such a participant's defacing would be considered to have failed."
   }
 }

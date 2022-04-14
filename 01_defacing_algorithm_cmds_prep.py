@@ -1,4 +1,6 @@
 import argparse
+import subprocess
+from collections import defaultdict
 from os import fspath
 from pathlib import Path
 
@@ -15,6 +17,13 @@ def get_args():
 
     args = parser.parse_args()
     return Path(args.input), Path(args.output)
+
+
+def run_command(cmdstr):
+    p = subprocess.Popen(cmdstr, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True,
+                         encoding='utf8', shell=True)
+
+    return p.stdout.readline().strip()
 
 
 def write_cmds_to_file(cmds_list, filepath):
@@ -36,19 +45,9 @@ def deface(output_dir, modality, scans_list):
         # filename without the extensions
         prefix = scan.name.split('.')[0]
 
-        # make output directories within subject directory for afni and fsl programs
-        fsl = subj_outdir / 'fsl'
+        # make output directories within subject directory for afni
         afni = subj_outdir / 'afni'
-        mkdir_cmds = f"mkdir -p {fsl}/{{bet,fsl_deface}} {afni}/{{refacer,skullstrip}}"
-
-        # fsl commands
-        fsl_anat = f"fsl_anat -o {fsl.joinpath('fsl')} --nocleanup -i {scan}"
-        bet = f"bet {scan} {fsl.joinpath('bet', prefix + '_bet.nii.gz')} -S -d"
-
-        deface_prefix = fsl.joinpath('fsl_deface', prefix)
-        fsl_deface = f"fsl_deface {scan} {deface_prefix}_deface -d {deface_prefix}_defacing_mask " \
-                     f"-n {deface_prefix}_cropped_struc -m13 {deface_prefix}_orig_2_std -m12 {deface_prefix}_orig_2_cropped " \
-                     f"-m23 {deface_prefix}_cropped_2_std"
+        mkdir_cmds = f"mkdir -p {afni}/{{refacer,skullstrip}}"
 
         # afni commands
         refacer = f"@afni_refacer_run -input {scan} -mode_deface -no_clean -prefix {fspath(afni.joinpath('refacer', prefix))}"
@@ -58,8 +57,8 @@ def deface(output_dir, modality, scans_list):
                      f"fslmaths {skullstrip_prefix}.nii.gz -bin {skullstrip_prefix}_binarized.nii.gz"
 
         full_cmd = ' ; '.join(
-            ["START=`date +%s`", mkdir_cmds, fsl_anat, bet, refacer, skullstrip, fsl_deface,
-             "STOP=`date +%s`", "RUNTIME=$((STOP-START))", "echo ${RUNTIME}"]) + '\n'
+            ["START=`date +%s`", mkdir_cmds, refacer, skullstrip, "STOP=`date +%s`", "RUNTIME=$((STOP-START))",
+             "echo ${RUNTIME}"]) + '\n'
 
         cmds_list.append(full_cmd)
 
@@ -122,22 +121,62 @@ def registration(output_dir, anat_dirs, t1_list, non_t1_list):
     return cmds
 
 
+def find_scans(subjs: list):
+    """
+    Find all the T1w and corresponding non-T1w scans for each
+    subject and session.
+
+    :parameter subjs: List of paths to subject bids directories
+
+    :return paths_dict: Nested default dictionary with T1s and
+    their associated non-T1w scans' info.
+
+    Example of a nested dictionary -
+    paths_dict = {
+        "sub-01":{
+            "ses-01":{
+                "sub-01_ses-01_run-01_T1w.nii.gz":[
+                    "sub-01_ses-01_run-02_T1w.nii.gz",
+                    "sub-01_ses-01_run-01_T2w.nii.gz",
+                    "sub-01_ses-01_run-01_PDw.nii.gz"]
+                    }
+                }
+            }
+    """
+    paths_dict = defaultdict(lambda: defaultdict())
+    t1_not_found = []
+    for subj in subjs:
+        subjid = subj.name
+        scans = list(subj.glob('ses-*/anat/*nii*'))
+        t1_suffix = ('T1w.nii.gz', 'T1w.nii')
+        t1s = sorted([s for s in scans if s.name.endswith(t1_suffix)])
+        if not t1s:
+            t1_not_found.append(subjid)
+            primary_t1 = "n/a"
+        else:
+            primary_t1 = t1s.pop(-1)
+
+        paths_dict[subjid]["t1"] = primary_t1
+        paths_dict[subjid]["others"] = [s for s in scans if s != primary_t1]
+    return paths_dict
+
+
 def main():
     # generate commands
     input, output = get_args()
+    subjs = list(input.glob('sub-*'))
+    paths_info_dict = find_scans(subjs)
 
-    # @TODO this needs to be a regular expression search
-    t1_set = set(list(input.glob('sub-*/ses-*/anat/*_run-*1_*T1w.nii.gz')))
-    non_t1_set = set(list(input.glob('sub-*/ses-*/anat/*.nii.gz'))) - t1_set
-    anat_dirs = list(input.glob('sub-*/ses-*/anat'))
+    t1_set = [paths_info_dict[i]["t1"] for i in paths_info_dict.keys() if paths_info_dict[i]["t1"] != "n/a"]
+    print(len(t1_set))
 
     # write defacing commands to a swarm file
-    defacing_cmds = deface(output, 'anat', list(t1_set))
-    write_cmds_to_file(defacing_cmds, f'defacing_commands_{input.parent.name}.swarm')
-
-    # write registration commands to a swarm file
-    registration_cmds = registration(output, anat_dirs, list(t1_set), list(non_t1_set))
-    write_cmds_to_file(registration_cmds, f'registration_commands_{input.parent.name}.swarm')
+    # defacing_cmds = deface(output, 'anat', list(t1_set))
+    # write_cmds_to_file(defacing_cmds, f'defacing_commands_{input.parent.name}.swarm')
+    #
+    # # write registration commands to a swarm file
+    # registration_cmds = registration(output, anat_dirs, list(t1_set), list(non_t1_set))
+    # write_cmds_to_file(registration_cmds, f'registration_commands_{input.parent.name}.swarm')
 
 
 if __name__ == "__main__":
