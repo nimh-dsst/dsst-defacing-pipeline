@@ -1,0 +1,17 @@
+{
+    "T1w scans": [
+        "sub-NDAREM381WD9",
+        "sub-NDARBN729RG0",
+        "sub-NDARVG708MPB",
+        "sub-NDARWE296DLJ",
+        "sub-NDARNB146TBN"
+    ],
+    "afni workdirs": [
+        "sub-NDARINVAU534LVL_ses-01_run-1_T1w.nii.gz",
+        "sub-NDARAN710GJ1_ses-01_run-1_T1w.nii.gz",
+        "sub-NDARDB620APU_ses-02_run-1_T1w.nii.gz",
+        "sub-NDARVD641NTJ_ses-01_run-1_T1w.nii.gz",
+        "sub-NDARNJ460BR5_ses-01_run-1_T1w.nii.gz",
+        "sub-NDAREK314FNC_ses-01_run-1_T1w.nii.gz"
+    ]
+}
