@@ -65,58 +65,50 @@ def deface(output_dir, modality, scans_list):
     return cmds_list
 
 
-def registration(output_dir, anat_dirs, t1_list, non_t1_list):
+def registration(output_dir, t1_list, scans_dict):
     # @TODO define t1_mask somewhere/somehow
+    afni_wrkdir_not_found = []
     cmds = []
     modality = 'anat'
-    # @TODO check if anat_dirs and t1_list are of equal length
-    for anat_dir in anat_dirs:
-
-        for t1 in t1_list:
-            if anat_dir in t1:
-                # right now assumes only one T1w per anat_dir
-                break
-
+    for t1 in t1_list:
         entities = t1.name.split('_')
+        subjid = entities[0]
+        print(subjid)
+        others = scans_dict[subjid][t1]
         acq = [i.split('-')[1] for i in entities if i.startswith('acq-')]
         if acq:
             subj_outdir = output_dir.joinpath(entities[0], entities[1], modality, acq[0])
         else:
             subj_outdir = output_dir.joinpath(entities[0], entities[1], modality)
 
+        flirt = subj_outdir / 'flirt'
         # make output directories within subject directory for fsl flirt
-        flirt = subj_outdir / 'fsl' / 'flirt'
-
-        for non_t1 in non_t1_list:
-            if anat_dir in non_t1:
-                matrix = f"{flirt.joinpath(non_t1.name)}_reg.mat"
-                out = f"{flirt.joinpath(non_t1.name)}_reg.nii.gz"
-                non_t1_mask = f"{flirt.joinpath(non_t1.name)}_mask.nii.gz"
-                defaced_non_t1 = f"{flirt.joinpath(non_t1.name)}_defaced.nii.gz"
+        afni_wrkdir = list(subj_outdir.joinpath('afni', 'refacer').glob('__work*'))
+        if not afni_wrkdir:
+            afni_wrkdir_not_found.append(t1)
+        else:
+            t1_mask = afni_wrkdir[0].joinpath('afni_defacemask.nii.gz')
+            for other in others:
+                other_prefix = other.name.split('.')[0]
+                matrix = f"{flirt.joinpath(other_prefix)}_reg.mat"
+                out = f"{flirt.joinpath(other_prefix)}_reg.nii.gz"
+                other_mask = f"{flirt.joinpath(other_prefix)}_mask.nii.gz"
+                other_defaced = f"{flirt.joinpath(other_prefix)}_defaced.nii.gz"
 
                 mkdir_cmd = f"mkdir -p {flirt}"
 
-                flirt_cmd = f"""flirt
-                                -dof 6
-                                -cost mutualinfo
-                                -searchcost mutualinfo
-                                -in {t1}
-                                -ref {non_t1}
-                                -omat {matrix}
-                                -out {out}
-                                """
+                flirt_cmd = f"flirt -dof 6 -cost mutualinfo -searchcost mutualinfo -in {t1} " \
+                            f"-ref {other} -omat {matrix} -out {out}"
 
-                applyxfm_cmd = f"""flirt
-                                -interp nearestneighbour
-                                -applyxfm -init {matrix}
-                                -in {t1_mask}
-                                -ref {non_t1}
-                                -out {non_t1_mask}
-                                """
+                # t1 mask can be found in the afni work directory
+                applyxfm_cmd = f"flirt -interp nearestneighbour -applyxfm -init {matrix} " \
+                               f"-in {t1_mask} -ref {other} -out {other_mask}"
 
-                mask_cmd = f"""fslmaths {non_t1} -mas {non_t1_mask} {defaced_non_t1}"""
+                mask_cmd = f"fslmaths {other} -mas {other_mask} {other_defaced}"
+                full_cmd = " ; ".join([mkdir_cmd, flirt_cmd, applyxfm_cmd, mask_cmd]) + '\n'
+                print(full_cmd)
 
-                cmds.append(" ; ".join([mkdir_cmd, flirt_cmd, applyxfm_cmd, mask_cmd]) + '\n')
+                cmds.append(full_cmd)
 
     return cmds
 
@@ -130,18 +122,6 @@ def find_scans(subjs: list):
 
     :return paths_dict: Nested default dictionary with T1s and
     their associated non-T1w scans' info.
-
-    Example of a nested dictionary -
-    paths_dict = {
-        "sub-01":{
-            "ses-01":{
-                "sub-01_ses-01_run-01_T1w.nii.gz":[
-                    "sub-01_ses-01_run-02_T1w.nii.gz",
-                    "sub-01_ses-01_run-01_T2w.nii.gz",
-                    "sub-01_ses-01_run-01_PDw.nii.gz"]
-                    }
-                }
-            }
     """
     paths_dict = defaultdict(lambda: defaultdict())
     t1_not_found = []
@@ -155,28 +135,28 @@ def find_scans(subjs: list):
             primary_t1 = "n/a"
         else:
             primary_t1 = t1s.pop(-1)
-
-        paths_dict[subjid]["t1"] = primary_t1
-        paths_dict[subjid]["others"] = [s for s in scans if s != primary_t1]
+        paths_dict[subjid][primary_t1] = [s for s in scans if s != primary_t1]
     return paths_dict
 
 
 def main():
-    # generate commands
+    # get command line arguments
     input, output = get_args()
-    subjs = list(input.glob('sub-*'))
-    paths_info_dict = find_scans(subjs)
 
-    t1_set = [paths_info_dict[i]["t1"] for i in paths_info_dict.keys() if paths_info_dict[i]["t1"] != "n/a"]
-    print(len(t1_set))
+    # generate a t1 to other scans mapping
+    subjs = list(input.glob('sub-*'))
+    mapping_dict = find_scans(subjs)
+
+    # list
+    t1_list = [k for i in mapping_dict.keys() for k, v in mapping_dict[i].items() if k != "n/a"]
 
     # write defacing commands to a swarm file
-    # defacing_cmds = deface(output, 'anat', list(t1_set))
-    # write_cmds_to_file(defacing_cmds, f'defacing_commands_{input.parent.name}.swarm')
-    #
-    # # write registration commands to a swarm file
-    # registration_cmds = registration(output, anat_dirs, list(t1_set), list(non_t1_set))
-    # write_cmds_to_file(registration_cmds, f'registration_commands_{input.parent.name}.swarm')
+    defacing_cmds = deface(output, 'anat', t1_list)
+    write_cmds_to_file(defacing_cmds, f'defacing_commands_{input.parent.name}.swarm')
+
+    # write registration commands to a swarm file
+    registration_cmds = registration(output, t1_list, mapping_dict)
+    write_cmds_to_file(registration_cmds, f'registration_commands_{input.parent.name}.swarm')
 
 
 if __name__ == "__main__":
