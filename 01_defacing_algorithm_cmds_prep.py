@@ -1,4 +1,5 @@
 import argparse
+import json
 import subprocess
 from collections import defaultdict
 from os import fspath
@@ -73,7 +74,7 @@ def registration(output_dir, t1_list, scans_dict):
     for t1 in t1_list:
         entities = t1.name.split('_')
         subjid = entities[0]
-        print(subjid)
+        # print(subjid)
         others = scans_dict[subjid][t1]
         acq = [i.split('-')[1] for i in entities if i.startswith('acq-')]
         if acq:
@@ -85,7 +86,7 @@ def registration(output_dir, t1_list, scans_dict):
         # make output directories within subject directory for fsl flirt
         afni_wrkdir = list(subj_outdir.joinpath('afni', 'refacer').glob('__work*'))
         if not afni_wrkdir:
-            afni_wrkdir_not_found.append(t1)
+            afni_wrkdir_not_found.append(t1.name)
         else:
             t1_mask = afni_wrkdir[0].joinpath('afni_defacemask.nii.gz')
             for other in others:
@@ -106,11 +107,9 @@ def registration(output_dir, t1_list, scans_dict):
 
                 mask_cmd = f"fslmaths {other} -mas {other_mask} {other_defaced}"
                 full_cmd = " ; ".join([mkdir_cmd, flirt_cmd, applyxfm_cmd, mask_cmd]) + '\n'
-                print(full_cmd)
-
                 cmds.append(full_cmd)
 
-    return cmds
+    return cmds, afni_wrkdir_not_found
 
 
 def find_scans(subjs: list):
@@ -136,16 +135,19 @@ def find_scans(subjs: list):
         else:
             primary_t1 = t1s.pop(-1)
         paths_dict[subjid][primary_t1] = [s for s in scans if s != primary_t1]
-    return paths_dict
+    return paths_dict, t1_not_found
 
 
 def main():
     # get command line arguments
     input, output = get_args()
 
+    # track missing files and directories
+    missing = dict()
+
     # generate a t1 to other scans mapping
     subjs = list(input.glob('sub-*'))
-    mapping_dict = find_scans(subjs)
+    mapping_dict, missing_t1s = find_scans(subjs)
 
     # list
     t1_list = [k for i in mapping_dict.keys() for k, v in mapping_dict[i].items() if k != "n/a"]
@@ -155,8 +157,26 @@ def main():
     write_cmds_to_file(defacing_cmds, f'defacing_commands_{input.parent.name}.swarm')
 
     # write registration commands to a swarm file
-    registration_cmds = registration(output, t1_list, mapping_dict)
+    registration_cmds, missing_afni_wrkdirs = registration(output, t1_list, mapping_dict)
     write_cmds_to_file(registration_cmds, f'registration_commands_{input.parent.name}.swarm')
+
+    # writing missing info to file
+    missing["T1w scans"] = missing_t1s
+    missing["afni workdirs"] = missing_afni_wrkdirs
+    with open('missing_info.json', 'w') as f:
+        json.dump(missing, f, indent=4)
+
+    # writing mapping_dict to file
+    human_readable_mapping_dict = defaultdict(dict)
+
+    for subjid, value in mapping_dict.items():
+        for t1, others in mapping_dict[subjid].items():
+            if t1 != "n/a":
+                human_readable_mapping_dict[subjid]["primary_t1"] = t1.name
+                human_readable_mapping_dict[subjid]["other_scans"] = [other.name for other in others]
+    print(len(human_readable_mapping_dict.keys()))
+    with open('primary_t1s_to_non-t1s_mapping.json', 'w') as map_f:
+        json.dump(human_readable_mapping_dict, map_f, indent=4)
 
 
 if __name__ == "__main__":
