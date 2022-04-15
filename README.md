@@ -44,6 +44,15 @@ for i in `cat as_visualqc_arsh.txt`; do
 done;
 ```
 
+## visualqc deface
+
+An example command to setup visualqc deface for autism subtypes dataset
+```bash
+vqcdeface -u /data/NIMH_scratch/defacing_comparisons/autism_subtypes/defacing_outputs \
+-m tmp.00.INPUT_iso_1mm.nii.gz -d tmp.99.result.deface_iso_1mm.nii.gz \
+-r tmp.99.result.deface_iso_1mm_render \
+-o visualqc -i as_visualqc_arsh.txt
+```
 
 
 
