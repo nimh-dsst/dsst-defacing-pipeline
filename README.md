@@ -4,6 +4,35 @@
 2. [VisualQC](https://raamana.github.io/visualqc/gallery_defacing.html) defaced T1 images and correct/flag any that fail the QC Criteria. 
 3. Register other **T1w and non-T1w scans** of each subject to the T1w image in step 1 and apply its defacemask to the remaining scans. 
 
+## Defacing Workflow Instructions
+
+**Step 1**
+
+The `01_defacing_algorithm_cmds_prep.py` script outputs two `.swarm` files with following filenames:
+  1. `defacing_commands_{input-directory-name}.swarm`
+  2. `registration_commands_{input-directory-name}.swarm`
+
+```bash
+(base) arshitha@Personal-MacBook dsst-defacing-sop % python 01_defacing_algorithm_cmds_prep.py -h
+usage: 01_defacing_algorithm_cmds_prep.py [-h] [-in INPUT] [-out OUTPUT]
+
+Generate a swarm command file to deface T1w scans for a given BIDS dataset.
+
+optional arguments:
+  -h, --help   show this help message and exit
+  -in INPUT    Path to input BIDS dataset.
+  -out OUTPUT  Path to output dataset.
+
+```
+
+**Step 2**
+
+Run `defacing_commands_{input-directory-name}.swarm` through an interactive session on biowulf. Example command: 
+
+```bash
+swarm -f <path/to/defacing_commands_{input-directory-name}.swarm> --module afni --logdir <path/to/swarm/logdir> --job-name afni_refacer_t1_defacing --merge-output 
+```
+
 ## VisualQC Deface Prep Commands
 
 Following is a list of useful commands that were used in the process of defacing.
