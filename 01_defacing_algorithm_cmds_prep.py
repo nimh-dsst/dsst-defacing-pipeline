@@ -7,17 +7,20 @@ from pathlib import Path
 
 
 def get_args():
-    parser = argparse.ArgumentParser(
-        description='Generate a swarm command file to deface T1w scans for a given BIDS dataset.')
+    parser = argparse.ArgumentParser(prog='prepare_defacing_cmds',
+                                     description='Generate a swarm command file to deface T1w scans for a given BIDS dataset.')
 
-    parser.add_argument('-in', action='store', dest='input',
+    parser.add_argument('-i', '--input', action='store', dest='input', type=Path, required=True,
                         help='Path to input BIDS dataset.')
-
-    parser.add_argument('-out', action='store', dest='output',
+    parser.add_argument('-o', '--output', action='store', dest='output', type=Path, required=True,
                         help='Path to output dataset.')
+    parser.add_argument('--afni-refacer-options', action='store', dest='afni_refacer_opt',
+                        help=f'''Additional options the user would like to add apart from `-mode_deface`, 
+                        `-no_clean` and `prefix`. Available @afni_refacer_run options can be found on
+                        https://afni.nimh.nih.gov/pub/dist/doc/program_help/@afni_refacer_run.html''')
 
     args = parser.parse_args()
-    return Path(args.input), Path(args.output)
+    return Path(args.input), Path(args.output), args.afni_refacer_opt
 
 
 def run_command(cmdstr):
@@ -66,52 +69,6 @@ def deface(output_dir, modality, scans_list):
     return cmds_list
 
 
-def registration(output_dir, t1_list, scans_dict):
-    # @TODO define t1_mask somewhere/somehow
-    afni_wrkdir_not_found = []
-    cmds = []
-    modality = 'anat'
-    for t1 in t1_list:
-        entities = t1.name.split('_')
-        subjid = entities[0]
-        # print(subjid)
-        others = scans_dict[subjid][t1]
-        acq = [i.split('-')[1] for i in entities if i.startswith('acq-')]
-        if acq:
-            subj_outdir = output_dir.joinpath(entities[0], entities[1], modality, acq[0])
-        else:
-            subj_outdir = output_dir.joinpath(entities[0], entities[1], modality)
-
-        flirt = subj_outdir / 'flirt'
-        # make output directories within subject directory for fsl flirt
-        afni_wrkdir = list(subj_outdir.joinpath('afni', 'refacer').glob('__work*'))
-        if not afni_wrkdir:
-            afni_wrkdir_not_found.append(t1.name)
-        else:
-            t1_mask = afni_wrkdir[0].joinpath('afni_defacemask.nii.gz')
-            for other in others:
-                other_prefix = other.name.split('.')[0]
-                matrix = f"{flirt.joinpath(other_prefix)}_reg.mat"
-                out = f"{flirt.joinpath(other_prefix)}_reg.nii.gz"
-                other_mask = f"{flirt.joinpath(other_prefix)}_mask.nii.gz"
-                other_defaced = f"{flirt.joinpath(other_prefix)}_defaced.nii.gz"
-
-                mkdir_cmd = f"mkdir -p {flirt}"
-
-                flirt_cmd = f"flirt -dof 6 -cost mutualinfo -searchcost mutualinfo -in {t1} " \
-                            f"-ref {other} -omat {matrix} -out {out}"
-
-                # t1 mask can be found in the afni work directory
-                applyxfm_cmd = f"flirt -interp nearestneighbour -applyxfm -init {matrix} " \
-                               f"-in {t1_mask} -ref {other} -out {other_mask}"
-
-                mask_cmd = f"fslmaths {other} -mas {other_mask} {other_defaced}"
-                full_cmd = " ; ".join([mkdir_cmd, flirt_cmd, applyxfm_cmd, mask_cmd]) + '\n'
-                cmds.append(full_cmd)
-
-    return cmds, afni_wrkdir_not_found
-
-
 def find_scans(subjs: list):
     """
     Find all the T1w and corresponding non-T1w scans for each
@@ -140,10 +97,11 @@ def find_scans(subjs: list):
 
 def main():
     # get command line arguments
-    input, output = get_args()
+    input, output, afni_refacer_opt = get_args()
+    script_output_dir = output.joinpath('script_outputs')
 
-    # track missing files and directories
-    missing = dict()
+    if not script_output_dir.exists():
+        script_output_dir.mkdir(exist_ok=True, parents=True)
 
     # generate a t1 to other scans mapping
     subjs = list(input.glob('sub-*'))
@@ -154,17 +112,12 @@ def main():
 
     # write defacing commands to a swarm file
     defacing_cmds = deface(output, 'anat', t1_list)
-    write_cmds_to_file(defacing_cmds, f'defacing_commands_{input.parent.name}.swarm')
-
-    # write registration commands to a swarm file
-    registration_cmds, missing_afni_wrkdirs = registration(output, t1_list, mapping_dict)
-    write_cmds_to_file(registration_cmds, f'registration_commands_{input.parent.name}.swarm')
+    write_cmds_to_file(defacing_cmds, script_output_dir.joinpath(f'defacing_commands_{input.parent.name}.swarm'))
 
     # writing missing info to file
-    missing["T1w scans"] = missing_t1s
-    missing["afni workdirs"] = missing_afni_wrkdirs
-    with open('missing_info.json', 'w') as f:
-        json.dump(missing, f, indent=4)
+    with open(script_output_dir.joinpath('missing_t1s.txt'), 'w') as f:
+        for s in missing_t1s:
+            f.write(s+' \n')
 
     # writing mapping_dict to file
     human_readable_mapping_dict = defaultdict(dict)
@@ -174,8 +127,7 @@ def main():
             if t1 != "n/a":
                 human_readable_mapping_dict[subjid]["primary_t1"] = t1.name
                 human_readable_mapping_dict[subjid]["other_scans"] = [other.name for other in others]
-    print(len(human_readable_mapping_dict.keys()))
-    with open('primary_t1s_to_non-t1s_mapping.json', 'w') as map_f:
+    with open(script_output_dir.joinpath('primary_t1s_to_non-t1s_mapping.json'), 'w') as map_f:
         json.dump(human_readable_mapping_dict, map_f, indent=4)
 
 
