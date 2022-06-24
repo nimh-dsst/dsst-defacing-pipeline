@@ -1,60 +1,78 @@
 # DSST Defacing Workflow
 
+## Workflow
+
 1. Run [@afni_refacer_run](https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/tutorials/refacer/refacer_run.html) on **a T1w scan per subject** of a given dataset. 
 2. [VisualQC](https://raamana.github.io/visualqc/gallery_defacing.html) defaced T1 images and correct/flag any that fail the QC Criteria. 
 3. Register other **T1w and non-T1w scans** of each subject to the T1w image in step 1 and apply its defacemask to the remaining scans. 
+4. QC the scans from 3 using [VisualQC Align](https://raamana.github.io/visualqc/gallery_defacing.html)
 
-## Defacing Workflow Instructions
+## Instructions
 
-**Step 1**
-
-The `01_defacing_algorithm_cmds_prep.py` script outputs two `.swarm` files with following filenames:
-  1. `defacing_commands_{input-directory-name}.swarm`
-  2. `registration_commands_{input-directory-name}.swarm`
-
+**Step 1:** Run `01_defacing_cmds_prep.py`
+Usage:
 ```bash
-(base) arshitha@Personal-MacBook dsst-defacing-sop % python 01_defacing_algorithm_cmds_prep.py -h
-usage: 01_defacing_algorithm_cmds_prep.py [-h] [-in INPUT] [-out OUTPUT]
+python 01_defacing_cmds_prep.py -i <path/to/input/bids/dataset> -o <path/to/output/directory>
+```
+The script requires two arguments:
+  1. `-i/--input` Path to BIDS format dataset.
+  2. `-o/--output` Path to output directory where the defaced scans will be stored. 
 
-Generate a swarm command file to deface T1w scans for a given BIDS dataset.
-
-optional arguments:
-  -h, --help   show this help message and exit
-  -in INPUT    Path to input BIDS dataset.
-  -out OUTPUT  Path to output dataset.
-
+and outputs three files at `{OUTPUT_DIR}/script_outputs/`
+  1. a `.swarm` file named `defacing_commands_{INPUT_DIRNAME}.swarm` with commands to deface T1w scans using @afni_refacer_run
+  2. a `missing_t1.txt` file that lists subject-sessions that don't have an associated T1w scan.
+  3. a `primary_t1s_to_non-t1s_mapping.json` mapping file that maps each subject and session with their primary T1w scan and
+  a list of other T1w runs and non T1w scans. 
+     - **"primary_t1"** is a T1w scan within the subject's session that's defaced with @afni_refacer_run.
+     - **"other_scans"** refers to all other scans in the subject's session's `anat` directory apart from the T1 above. 
+  Here's an example:
+  ```json
+{
+  "sub-A": {
+    "ses-01": {
+      "primary_t1": "sub-A_ses-01_run-1_T1w.nii.gz",
+      "other_scans": [
+        "sub-A_ses-01_acq-axlowres_run-01_T2w.nii.gz",
+        "sub-A_ses-01_acq-axlowres_run-01_PDw.nii.gz"]
+    },
+    "ses-02": {
+      "primary_t1": "sub-A_ses-02_run-01_T1w.nii.gz",
+      "other_scans": [
+        "sub-A_ses-02_acq-axlowres_run-01_T2w.nii.gz",
+        "sub-A_ses-02_acq-axlowres_run-01_FLAIR.nii.gz"]
+    }
+  }
+}
 ```
 
-**Step 2**
+**Step 2:** Run `02_registration_and_masking_cmds_prep.py`
 
-Run `defacing_commands_{input-directory-name}.swarm` through an interactive session on biowulf. Example command: 
-
+Usage:
 ```bash
-swarm -f <path/to/defacing_commands_{input-directory-name}.swarm> --module afni --logdir <path/to/swarm/logdir> --job-name afni_refacer_t1_defacing --merge-output 
+python 02_registration_and_masking_cmds_prep.py -i <path/to/input/bids/dataset> -o <path/to/output/directory> --mapping-file <path/to/json/file/mapping/primary/t1/to/other/scans>
 ```
+
+The script requires two arguments:
+1. `-i/--input` Path to BIDS format dataset.
+2. `-o/--output` Path to output directory where the defaced scans will be stored.
+3. `--mapping-file` Path to JSON file that maps 'primary T1s' to 'other scans'.
+
+and outputs two files at `{OUTPUT_DIR}/script_outputs/`
+1. a `.swarm` file named `registration_masking_commands_{INPUT_DIRNAME}.swarm` that contains commands to register "other_scans" to their respective "primary_t1" and apply primary_t1's defacemask to the registered scans using FSL tools.
+2. a `missing_afni_workdir.txt` file that lists "primary_t1" scans that (for whatever reason) failed to be defaced afni refacer run.
+
+**Step 3:** Generate 3D renders for VisualQC.
+
+@TODO
+- [] Add screenshots of visual qc deface as examples of the screen view. [Arsh]
+- [] Detail how to use 03_vqc_generate_renders script. [Arsh]
+- [] An example afni_workdir directory tree after generating renders. [Arsh]
+- [] Explain the Visual QC deface command and it's components. [Eric]
+- [] Similarly for Visual QC Align [Eric]
 
 ## VisualQC Deface Prep Commands
 
 Following is a list of useful commands that were used in the process of defacing.
-
-- **Generating 3D renders for QC** 
-
-  - **`fsl_gen_3D`**
-
-      ```bash
-      $ fsl_gen_3D
-    
-      Usage: fsl_gen_3D <input> <output> 
-
-         Tool to generate a 3D snapshot of a structural image.
-      ```
-      Example command to generate 3D renders for a given dataset
-
-      ```bash
-      for IN in `ls sub-*/*/anat/*/afni/refacer/__work*/tmp.99.result.deface.nii`; do \
-      OUT=$(echo $IN | sed "s|.nii|.render|g"); fsl_gen_3D $IN $OUT; \
-      done;
-      ```
 
   - **`fsleyes render`**
 
@@ -93,10 +111,29 @@ Links to documents used to jot down our thoughts/ideas in the process of testing
 
 - [Slides from early days of the Project](https://docs.google.com/presentation/d/1-eNBUjRG89kgq1sxaphNEqWQ3KZQ0kpeCfGQprqlqWo/edit#slide=id.g116908c6bac_0_0)
 
+## Dealing with edge cases
+@TODO
+Add solutions or tweaks that the user could have in their arsenal when met with edge cases such as 
+- [] subject-sessions with no T1s.
+- [] anisotropic mri acquisitions are skewed in Visual QC. 
+
+## Types of QC-failures we saw
+@TODO
+Add screenshots with example failures and a fix if available. 
+
 ## References
+@TODO
+- [] Links to afni_refacer_run, fsl flirt, fslmaths and visual qc documents. 
+- [] other links with useful information about defacing example papers etc 
 
 https://afni.nimh.nih.gov/afni/community/board/read.php?1,159053,159053#msg-159053
 
 https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/fsl_anat
 
 https://andysbrainbook.readthedocs.io/en/latest/fMRI_Short_Course/Preprocessing/Skull_Stripping.html
+
+## Acknowledgements
+@TODO 
+Acknowledge
+- [] Pradeep Ramanna
+- [] Paul Taylor and AFNI team

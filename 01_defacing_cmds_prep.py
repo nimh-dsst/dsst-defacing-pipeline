@@ -1,6 +1,5 @@
 import argparse
 import json
-import subprocess
 from collections import defaultdict
 from os import fspath
 from pathlib import Path
@@ -21,13 +20,6 @@ def get_args():
 
     args = parser.parse_args()
     return Path(args.input), Path(args.output), args.afni_refacer_opt
-
-
-def run_command(cmdstr):
-    p = subprocess.Popen(cmdstr, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True,
-                         encoding='utf8', shell=True)
-
-    return p.stdout.readline().strip()
 
 
 def write_cmds_to_file(cmds_list, filepath):

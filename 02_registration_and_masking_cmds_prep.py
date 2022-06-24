@@ -13,7 +13,7 @@ def get_args():
     parser.add_argument('-o', '--output', action='store', dest='output', type=Path, required=True,
                         help='Path to output dataset.')
     parser.add_argument('--mapping-file', action='store', dest='mapping_file', type=Path, required=True,
-                        help="Path to JSON file that maps primary T1w scans to 'other' (additional runs of T1w and "
+                        help="Path to JSON file that maps 'primary T1w scans' to 'other scans' (additional runs of T1w and "
                              "non-T1w anatomical scans) 'primary_t1s_to_non-t1s_mapping.json'.")
 
     args = parser.parse_args()
@@ -81,7 +81,7 @@ def main():
 
     # write registration commands to a swarm file
     registration_cmds, missing_afni_workdirs = registration(output, data)
-    write_cmds_to_file(registration_cmds, output.joinpath(f'registration_commands_{input.parent.name}.swarm'))
+    write_cmds_to_file(registration_cmds, output.joinpath(f'registration_masking_commands_{input.parent.name}.swarm'))
 
     # write list of t1s without afni workdirs to file
     filename = output.joinpath('script_outputs', 'missing_afni_workdirs.txt')
