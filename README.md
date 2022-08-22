@@ -64,11 +64,11 @@ and outputs two files at `{OUTPUT_DIR}/script_outputs/`
 **Step 3:** Generate 3D renders for VisualQC.
 
 @TODO
-- [] Add screenshots of visual qc deface as examples of the screen view. [Arsh]
-- [] Detail how to use 03_vqc_generate_renders script. [Arsh]
-- [] An example afni_workdir directory tree after generating renders. [Arsh]
-- [] Explain the Visual QC deface command and it's components. [Eric]
-- [] Similarly for Visual QC Align [Eric]
+- [ ] Add screenshots of visual qc deface as examples of the screen view. [Arsh]
+- [ ] Detail how to use 03_vqc_generate_renders script. [Arsh]
+- [ ] An example afni_workdir directory tree after generating renders. [Arsh]
+- [ ] Explain the Visual QC deface command and it's components. [Eric]
+- [ ] Similarly for Visual QC Align [Eric]
 
 ## VisualQC Deface Prep Commands
 
@@ -112,19 +112,19 @@ Links to documents used to jot down our thoughts/ideas in the process of testing
 - [Slides from early days of the Project](https://docs.google.com/presentation/d/1-eNBUjRG89kgq1sxaphNEqWQ3KZQ0kpeCfGQprqlqWo/edit#slide=id.g116908c6bac_0_0)
 
 ## Dealing with edge cases
-@TODO
+**@TODO**
 Add solutions or tweaks that the user could have in their arsenal when met with edge cases such as 
-- [] subject-sessions with no T1s.
-- [] anisotropic mri acquisitions are skewed in Visual QC. 
+- [ ] subject-sessions with no T1s.
+- [ ] anisotropic mri acquisitions are skewed in Visual QC. 
 
 ## Types of QC-failures we saw
-@TODO
-Add screenshots with example failures and a fix if available. 
+**@TODO**
+[ ]Add screenshots with example failures and a fix if available. 
 
 ## References
-@TODO
-- [] Links to afni_refacer_run, fsl flirt, fslmaths and visual qc documents. 
-- [] other links with useful information about defacing example papers etc 
+**@TODO**
+- [ ] Links to afni_refacer_run, fsl flirt, fslmaths and visual qc documents. 
+- [ ] other links with useful information about defacing example papers etc 
 
 https://afni.nimh.nih.gov/afni/community/board/read.php?1,159053,159053#msg-159053
 
@@ -133,7 +133,7 @@ https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/fsl_anat
 https://andysbrainbook.readthedocs.io/en/latest/fMRI_Short_Course/Preprocessing/Skull_Stripping.html
 
 ## Acknowledgements
-@TODO 
+**@TODO** 
 Acknowledge
-- [] Pradeep Ramanna
-- [] Paul Taylor and AFNI team
+- [ ] Pradeep Ramanna
+- [ ] Paul Taylor and AFNI team
