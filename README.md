@@ -50,7 +50,27 @@ Here's a flow chart of what this process might look like.
 At this point, a big chunk of the job is done. Run `main.py` script that calls on `deface.py` and `register.py` to
 deface scans in the dataset.
 
-**STEP 2 usage notes**
+```bash
+usage: main.py [-h] --input INPUT --output OUTPUT --mapping-file MAP [--level {group,participant}] [--participant SUBJID]
+
+Deface anatomical scans for a given BIDS dataset.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --input INPUT, -i INPUT
+                        Path to input BIDS dataset.
+  --output OUTPUT, -o OUTPUT
+                        Path to output BIDS dataset with defaced scan.
+  --mapping-file MAP, -m MAP
+                        Path to primary to other/secondary scans mapping file.
+  --level {group,participant}, -l {group,participant}
+                        'group': Runs defacing commands, serially, on all subjects in the dataset. 'participant': Runs defacing commands on a single subject and its associated sessions.
+  --participant SUBJID, -p SUBJID
+                        Subject ID associated with the participant. Since the input dataset is assumed to be BIDS valid, this argument expects subject IDs with 'sub-' prefix.
+
+```
+
+Example:
 
 ```bash
 ```
@@ -67,6 +87,7 @@ deface scans in the dataset.
 Links to documents used to jot down our thoughts/ideas in the process of testing various tools and procedures
 
 - [Slides from early days of the Project](https://docs.google.com/presentation/d/1-eNBUjRG89kgq1sxaphNEqWQ3KZQ0kpeCfGQprqlqWo/edit#slide=id.g116908c6bac_0_0)
+- [Meeting notes with Adam and Dustin](https://docs.google.com/presentation/d/18MnazvqRg5nlVoA8SpqID5F0RzFHjfr40btpudNGOUw/edit#slide=id.g138febac7d2_0_25)
 
 ## Dealing with edge cases
 
@@ -79,7 +100,7 @@ Add solutions or tweaks that the user could have in their arsenal when met with 
 ## Types of QC-failures we saw
 
 **@TODO**
-[ ]Add screenshots with example failures and a fix if available.
+[ ] Add screenshots with example failures and a fix if available.
 
 ## References
 

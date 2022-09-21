@@ -9,7 +9,6 @@ import deface
 def get_args():
     parser = argparse.ArgumentParser(
         description='Deface anatomical scans for a given BIDS dataset.')
-    subparsers = parser.add_subparsers(help='commands')
 
     parser.add_argument('--input', '-i', action='store', required=True, dest='input',
                         help='Path to input BIDS dataset.')
@@ -17,14 +16,21 @@ def get_args():
     parser.add_argument('--output', '-o', action='store', required=True, dest='output',
                         help='Path to output BIDS dataset with defaced scan.')
 
-    parser.add_argument('--level', '-l', choices=['dataset', 'subject'], default='dataset',
-                        action='store', dest='level')  # TODO: add help description
-    subject_parser = subparsers.add_parser('subject_args')
-    subject_parser.add_argument('--subject', '-s', dest='subjid', action='store',
-                                help='Deface anatomical scans in the subject directory only.')
+    parser.add_argument('--mapping-file', '-m', action='store', required=True, dest='mapping',
+                        help='Path to primary to other/secondary scans mapping file.')
+
+    parser.add_argument('--level', '-l', choices=['group', 'participant'], default='group',
+                        action='store', dest='level',
+                        help=f"'group': Runs defacing commands, serially, on all subjects in the dataset. \n \
+                        'participant': Runs defacing commands on a single subject and its associated sessions.")
+
+    parser.add_argument('--participant', '-p', dest='subjid', action='store',
+                        help="Subject ID associated with the participant. Since the input dataset is assumed to be \
+                        BIDS valid, this argument expects subject IDs with 'sub-' prefix.")
 
     args = parser.parse_args()
-    return Path(args.input).resolve(), Path(args.output).resolve(), args.level, args.subjid
+    return Path(args.input).resolve(), Path(args.output).resolve(), Path(
+        args.mapping).resolve(), args.level, args.subjid
 
 
 def write_to_file(file_content, filepath):
@@ -43,7 +49,7 @@ def defaced_scans_in_bids_tree():
 
 def main():
     # get command line arguments
-    input, output, level, subjid = get_args()
+    input, output, mapping, level, subjid = get_args()
 
     afni_refacer_failures = []  # list of scans that failed afni_refacer_run
     mapping_dict = defaultdict(lambda: defaultdict(list))  # primary to other scans per subject-session mapping file
