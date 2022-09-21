@@ -2,7 +2,8 @@
 
 ## Workflow Diagram
 
-![images/generate_mappings.png]
+### STEP 1
+![Generate and finalize "primary" scans to "other" scans mapping file.](images/generate_mappings.png)
 
 1. Run [@afni_refacer_run](https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/tutorials/refacer/refacer_run.html) on **a T1w scan per subject** of a given dataset. 
 2. [VisualQC](https://raamana.github.io/visualqc/gallery_defacing.html) defaced T1 images and correct/flag any that fail the QC Criteria. 
