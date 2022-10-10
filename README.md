@@ -38,7 +38,7 @@ might depend on are:
 
 Here's a flow chart of what this process might look like.
 
-![Generate and finalize "primary" scans to "other" scans mapping file.](images/generate_mappings.png)
+![Generate and finalize "primary" scans to "other" scans mapping file.](images/dsst_defacing_wf_fig.png)
 
 **STEP 1 usage notes**
 
