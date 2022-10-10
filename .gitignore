@@ -1,2 +1,7 @@
+__pycache__/
+as_qc_failures.csv
+*.swarm
+*_testing/
+*_examples/
 scripts_outputs/
 .idea/

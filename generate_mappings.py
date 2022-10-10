@@ -21,11 +21,11 @@ from pathlib import Path
 
 
 def get_args():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description=__doc__)
 
-    parser.add_argument('-i', '--input', type=Path, action='store', dest='inputdir',
+    parser.add_argument('-i', '--input', type=Path, action='store', dest='inputdir', metavar='INPUT_DIR',
                         help='Path to input BIDS directory.')
-    parser.add_argument('-o', '--output', type=Path, action='store', dest='outdir',
+    parser.add_argument('-o', '--output', type=Path, action='store', dest='outdir', metavar='SCRIPT_OUTPUT_DIR',
                         default=Path('.'), help="Path to directory that'll contain this script's outputs.")
     args = parser.parse_args()
 
@@ -55,8 +55,20 @@ def primary_scans_qc_prep(mapping_dict, outdir):
     :return str vqc_t1_mri_cmd: A visualqc T1 MRI command string.
     """
 
-    primaries = [mapping_dict[subj_sess]['primary_t1'] for subj_sess in mapping_dict.keys() if
-                 mapping_dict[subj_sess]['primary_t1'] != ""]
+    interested_keys = ['primary_t1', 'others']
+    primaries = []
+    for subjid in mapping_dict.keys():
+
+        # check existence of sessions to query mapping dict
+        if mapping_dict[subjid].keys() != interested_keys:
+            for sessid in mapping_dict[subjid].keys():
+                primary = mapping_dict[subjid][sessid]['primary_t1']
+                primaries.append(primary)
+        else:
+            primary = mapping_dict[subjid]['primary_t1']
+            primaries.append(primary)
+        # remove empty strings from primaries list
+        primaries = [p for p in primaries if p != '']
 
     vqc_inputs = outdir.joinpath('visualqc_prep/t1_mri')
     if not vqc_inputs.exists:
@@ -66,9 +78,15 @@ def primary_scans_qc_prep(mapping_dict, outdir):
     for primary in primaries:
         entities = Path(primary).name.split('_')
         subjid = entities[0]
-        sessid = entities[1]
-        dest = vqc_inputs.joinpath(subjid, sessid, 'anat')
+
+        # check existence of session to construct destination path
+        sessid = [e for e in entities if e.startswith('ses')][0]
+        if sessid:
+            dest = vqc_inputs.joinpath(subjid, sessid, 'anat')
+        else:
+            dest = vqc_inputs.joinpath(subjid, 'anat')
         if not dest.exists(): dest.mkdir(parents=True)
+
         id_list.append(dest)
         ln_cmd = f"ln -s {primary} {dest.joinpath('primary.nii.gz')}"
         run(ln_cmd, "")
@@ -99,31 +117,86 @@ def sort_by_acq_time(sidecars):
         return acq_time_sorted_list
 
 
+def get_anat_dir_paths(subj_dir_path):
+    """Given subject directory path, finds all anat directories in subject directory tree.
+
+    :param Path subj_dir_path : Absolute path to subject directory.
+    :return: A list of absolute paths to anat directory(s) within subject tree.
+    """
+    anat_dirs = []
+
+    # check if there are session directories
+    # sess_exist, sessions = is_sessions(subj_dir_path)
+    sessions = list(subj_dir_path.glob('ses-*'))
+    sess_exist = True if sessions else False
+
+    if not sess_exist:
+        anat_dir = subj_dir_path.joinpath('anat')
+        if not anat_dir.exists():
+            print(f'No anat directories found for {subj_dir_path.name}.\n')
+        anat_dirs.append(anat_dir)
+    else:
+        for sess in sessions:
+            anat_dir = sess.joinpath('anat')
+            if not anat_dir.exists():
+                print(f'No anat directories found for {subj_dir_path.name} and {sess.name}.\n')
+            anat_dirs.append(anat_dir)
+
+    return anat_dirs, sess_exist
+
+
+def update_mapping_dict(mapping_dict, anat_dir, is_sessions, sidecars, t1_unavailable):
+    """Updates mapping dictionary for a given subject's or session's anatomical directory.
+
+    :param defaultdict mapping_dict: A dictionary with primary to others mapping information.
+    :param Path anat_dir: Absolute path to subject's or session's anatomical directory.
+    :param boolean is_sessions: True if subject/session has 'ses' directories, else False.
+    :param list sidecars: Absolute paths to T1w JSON sidecars.
+    :param list t1_unavailable: Subject/session directory paths that don't have a T1w scan.
+
+    :return defaultdict mapping_dict: An updated dictionary with primary to others mapping information.
+    :return list t1_unavailable: An updated list of subject/session directory paths that don't have a T1w scan.
+    """
+    subjid = anat_dir.parent.parent.name
+
+    if sidecars:
+        t1_acq_time_list = sort_by_acq_time(sidecars)
+
+        # latest T1w scan in the session based on acquisition time
+        nifti_fname = t1_acq_time_list[0][0].name.split('.')[0] + '.nii.gz'
+
+        primary_t1 = t1_acq_time_list[0][0].parent.joinpath(nifti_fname)
+        others = [str(s) for s in list(anat_dir.glob('*.nii*')) if s != primary_t1]
+    else:
+        t1_unavailable.append(anat_dir.parent)
+        primary_t1 = ""
+        others = [str(s) for s in list(anat_dir.glob('*.nii*'))]
+
+    # updating mapping dict
+    if is_sessions:
+        sessid = anat_dir.parent.name
+        mapping_dict[subjid][sessid]['primary_t1'] = str(primary_t1)
+        mapping_dict[subjid][sessid]['others'] = others
+    else:
+        mapping_dict[subjid]['primary_t1'] = str(primary_t1)
+        mapping_dict[subjid]['others'] = others
+
+    return mapping_dict, t1_unavailable
+
+
 def main():
     input, output = get_args()
+
+    # input_layout = bids.BIDSLayout(input) # taking insane amounts of time so not using pybids
     t1w_scan_not_found = []
-    mapping_dict = defaultdict(lambda: defaultdict(list))
+    mapping_dict = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
 
     for subj_dir in list(input.glob('sub-*')):
-        subjid = subj_dir.name
-        subj_sess_paths = list(subj_dir.glob('ses-*'))
-        for subj_sess_path in subj_sess_paths:
-            t1_sidecars = list(subj_sess_path.glob('anat/*T1w.json'))
-            if t1_sidecars:
-                t1_acq_time_list = sort_by_acq_time(t1_sidecars)
-
-                # latest T1w scan in the session based on acquisition time
-                nifti_fname = t1_acq_time_list[0][0].name.split('.')[0] + '.nii.gz'
-
-                primary_t1 = t1_acq_time_list[0][0].parent.joinpath(nifti_fname)
-                others = [str(s) for s in list(subj_sess_path.glob('anat/*.nii*')) if s != primary_t1]
-            else:
-                t1w_scan_not_found.append(subj_sess_path)
-                primary_t1 = ""
-                others = [str(s) for s in list(subj_sess_path.glob('anat/*.nii*'))]
-
-            mapping_dict[f"{subjid}/{subj_sess_path.name}"]['primary_t1'] = str(primary_t1)
-            mapping_dict[f"{subjid}/{subj_sess_path.name}"]['others'] = others
+        anat_dirs, sess_exist = get_anat_dir_paths(subj_dir)
+        for anat_dir in anat_dirs:
+            t1_sidecars = list(anat_dir.glob('*T1w.json'))
+            mapping_dict, t1w_scan_not_found = update_mapping_dict(mapping_dict, anat_dir, sess_exist, t1_sidecars,
+                                                                   t1w_scan_not_found)
 
     # write mapping dict to file
     with open(output.joinpath('primary_to_others_mapping.json'), 'w') as f1:
@@ -134,7 +207,11 @@ def main():
         for sess_path in t1w_scan_not_found:
             f2.write(str(sess_path) + '\n')
 
+    # write vqc command to file
     vqc_t1_mri_cmd = primary_scans_qc_prep(mapping_dict, output)
+    with open(output.joinpath('visualqc_t1_mri_cmd'), 'w') as f3:
+        f3.write(f"{vqc_t1_mri_cmd}\n")
+
     print(
         f"\nVisualQC's visualqc_t1_mri utility can be used to QC primary scans with the following command.\n {vqc_t1_mri_cmd}")
 
