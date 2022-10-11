@@ -107,16 +107,18 @@ def run_afni_refacer(primary_t1, others, subj_input_dir, output_dir):
 def deface_primary_scan(subj_input_dir, mapping_dict, output_dir):
     subjid = subj_input_dir.name
     sessions = [k for k in mapping_dict[subjid].keys() if k.startswith('ses')]
+    missing_refacer_outputs = []
     if sessions:
+
         for session in sessions:
             primary_t1 = mapping_dict[subjid][session]['primary_t1']
             others = [str(s) for s in mapping_dict[subjid][session]['others'] if s != primary_t1]
-            return run_afni_refacer(primary_t1, others, subj_input_dir, output_dir)
+            missing_refacer_outputs.append(run_afni_refacer(primary_t1, others, subj_input_dir, output_dir))
     else:
         primary_t1 = mapping_dict[subjid]['primary_t1']
         others = [str(s) for s in mapping_dict[subjid]['others'] if s != primary_t1]
-        return run_afni_refacer(primary_t1, others, subj_input_dir, output_dir)
-
+        missing_refacer_outputs.append(run_afni_refacer(primary_t1, others, subj_input_dir, output_dir))
+    return missing_refacer_outputs
     # # constructing afni refacer command
     # if primary_t1:
     #     primary_t1 = Path(primary_t1)

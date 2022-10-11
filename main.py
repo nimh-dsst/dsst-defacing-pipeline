@@ -56,12 +56,15 @@ def main():
         for subj_dir in list(input.glob('sub-*')):
             missing_refacer_out = deface.deface_primary_scan(subj_dir, mapping_dict, output)
             if missing_refacer_out is not None:
-                afni_refacer_failures.append(missing_refacer_out)
+                afni_refacer_failures.extend(missing_refacer_out)
     elif subjid:
         subj_dir = input.joinpath(subjid)
         missing_refacer_out = deface.deface_primary_scan(subj_dir, mapping_dict, output)
         if missing_refacer_out is not None:
-            afni_refacer_failures.append(missing_refacer_out)
+            afni_refacer_failures.extend(missing_refacer_out)
+
+    with open(output.joinpath('missing_afni_refacer_output.txt'), 'w') as f:
+        f.writelines(afni_refacer_failures)
 
 
 if __name__ == "__main__":
