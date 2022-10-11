@@ -64,7 +64,8 @@ def main():
             afni_refacer_failures.extend(missing_refacer_out)
 
     with open(output.joinpath('missing_afni_refacer_output.txt'), 'w') as f:
-        f.writelines(afni_refacer_failures)
+        for line in afni_refacer_failures:
+            f.write(str(line))
 
 
 if __name__ == "__main__":

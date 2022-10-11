@@ -19,14 +19,14 @@ The defacing workflow for datasets curated by the Data Science and Sharing Team 
   recently acquired T1w scan is of the best quality.
 - **Other/Secondary Scans:** All scans *except* the primary scan are grouped together and referred to as "other" or "
   secondary" scans for a given session.
-- **[VisualQC](https://raamana.github.io/visualqc):** A suite of QC tools developed by Pradeep Ramanna, assistant
-  Professor at University of Pittsburgh. While a noun, it's sometimes also used as a verb to refer to "QC-ing scans
+- **[VisualQC](https://raamana.github.io/visualqc):** A suite of QC tools developed by Pradeep Ramanna (assistant
+  Professor at University of Pittsburgh). While a noun, it's sometimes also used as a verb to refer to "QC-ing scans
   visually". Within the team, a sentence like "We'll be Visual QC-ing primary scans." means that we'll be eyeball-ing
   the primary scans using VisualQC.
 
 ## Workflow
 
-### STEP 1: Generate and finalize "primary" scans to "other" scans mapping file.
+### **1:** Generate and finalize "primary" scans to "other" scans mapping file.
 
 Generate a mapping file using the `generate_mappings.py` script. Edit the generated mapping file, if necessary. Use the
 flowchart below as reference while making decisions about or changes to the mapping file. The time and effort required
@@ -72,21 +72,21 @@ optional arguments:
 
 ```
 
-Example command:
+Example:
 
 ```bash
 python generate_mappings.py -i /data/NIMH_scratch/defacing_comparisons/code/code_refactoring/defacing_wf_data/as_toy_data/ -o scripts_outputs
 ```
 
-### STEP 2: Actually deface scans.
+### **2:** Actually deface scans.
 
 At this point, a big chunk of the job is done. Run `main.py` script that calls on `deface.py` and `register.py` to
 deface scans in the dataset.
 
 ```bash
-usage: main.py [-h] --input INPUT --output OUTPUT --mapping-file MAP [--level {group,participant}] [--participant SUBJID]
+usage: main.py [-h] --input INPUT --output OUTPUT --mapping-file MAPPING [--subject-id SUBJID]
 
-Deface anatomical scans for a given BIDS dataset.
+Deface anatomical scans for a given BIDS dataset or a subject directory in BIDS format.
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -94,11 +94,9 @@ optional arguments:
                         Path to input BIDS dataset.
   --output OUTPUT, -o OUTPUT
                         Path to output BIDS dataset with defaced scan.
-  --mapping-file MAP, -m MAP
+  --mapping-file MAPPING, -m MAPPING
                         Path to primary to other/secondary scans mapping file.
-  --level {group,participant}, -l {group,participant}
-                        'group': Runs defacing commands, serially, on all subjects in the dataset. 'participant': Runs defacing commands on a single subject and its associated sessions.
-  --participant SUBJID, -p SUBJID
+  --subject-id SUBJID, -s SUBJID
                         Subject ID associated with the participant. Since the input dataset is assumed to be BIDS valid, this argument expects subject IDs with 'sub-' prefix.
 
 ```
@@ -106,52 +104,41 @@ optional arguments:
 Example:
 
 ```bash
+python main.py -i /data/NIMH_scratch/defacing_comparisons/code/code_refactoring/defacing_wf_data/as_toy_data/ -o output_testing/ -m scripts_outputs/primary_to_others_mapping.json
 ```
 
-### STEP 3: Visually QC defaced scans.
-
-**STEP 3 usage notes**
+### **3:** Visually QC defaced scans.
 
 ```bash
 ```
 
 ## Project History
 
-Links to documents used to jot down our thoughts/ideas in the process of testing various tools and procedures
-
-- [Slides from early days of the Project](https://docs.google.com/presentation/d/1-eNBUjRG89kgq1sxaphNEqWQ3KZQ0kpeCfGQprqlqWo/edit#slide=id.g116908c6bac_0_0)
-- [Meeting notes with Adam and Dustin](https://docs.google.com/presentation/d/18MnazvqRg5nlVoA8SpqID5F0RzFHjfr40btpudNGOUw/edit#slide=id.g138febac7d2_0_25)
-
-## Dealing with edge cases
-
-**@TODO**
-Add solutions or tweaks that the user could have in their arsenal when met with edge cases such as
-
-- [ ] subject-sessions with no T1s.
-- [ ] anisotropic mri acquisitions are skewed in Visual QC.
-
-## Types of QC-failures we saw
-
-**@TODO**
-[ ] Add screenshots with example failures and a fix if available.
+A [documentation of project's history](https://docs.google.com/document/d/1up749OPH3IZf4WNpak9HRQ2qe4-zZI2FYKr6axN90qw/edit?usp=sharing)
+that includes brief accounts of decisions made, other meeting notes and a general timeline of the project
 
 ## References
 
-**@TODO**
-
-- [ ] Links to afni_refacer_run, fsl flirt, fslmaths and visual qc documents.
-- [ ] other links with useful information about defacing example papers etc
-
-https://afni.nimh.nih.gov/afni/community/board/read.php?1,159053,159053#msg-159053
-
-https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/fsl_anat
-
-https://andysbrainbook.readthedocs.io/en/latest/fMRI_Short_Course/Preprocessing/Skull_Stripping.html
+1. Theyers AE, Zamyadi M, O'Reilly M, Bartha R, Symons S, MacQueen GM, Hassel S, Lerch JP, Anagnostou E, Lam RW, Frey
+   BN, Milev R, Müller DJ, Kennedy SH, Scott CJM, Strother SC, and Arnott SR (2021)
+   [Multisite Comparison of MRI Defacing Software Across Multiple Cohorts](10.3389/fpsyt.2021.617997). Front. Psychiatry
+   12:617997. doi:10.3389/fpsyt.2021.617997
+2. The workflow is developed around
+   the [AFNI Refacer program](https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/tutorials/refacer/refacer_run.html).
+2. FSL's [`flirt`](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FLIRT)
+   and [`fslmaths`](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils?highlight=%28fslmaths%29) programs have been used
+   for registration and masking steps in the workflow.
+3. VisualQC's T1 MRI utility.
+4. VisualQC's defacing quality checker utility.
+5. VisualQC's alignment quality checker utility.
+6. [Skullstripping](https://andysbrainbook.readthedocs.io/en/latest/fMRI_Short_Course/Preprocessing/Skull_Stripping.html)
+7. [Relevant thread about 3dSkullStrip on AFNI message board](https://afni.nimh.nih.gov/afni/community/board/read.php?1,159053,159053#msg-159053)
 
 ## Acknowledgements
 
-**@TODO**
-Acknowledge
+We'd like to thank [Pradeep Raamana](https://www.aimi.pitt.edu/people/ant), Assistant Professor at the Department of
+Radiology at University of Pittsburgh, and [Paul Taylor](https://afni.nimh.nih.gov/Staff), Acting Director of Scientific
+and Statistical Computing Core (SSCC) at NIMH for their timely help in resolving and adapting VisualQC and AFNI Refacer,
+respectively, for the specific needs of this project.
 
-- [ ] Pradeep Ramanna
-- [ ] Paul Taylor and AFNI team
+@TODO: Revise wording here. 
