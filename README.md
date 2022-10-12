@@ -19,7 +19,7 @@ The defacing workflow for datasets curated by the Data Science and Sharing Team 
   recently acquired T1w scan is of the best quality.
 - **Other/Secondary Scans:** All scans *except* the primary scan are grouped together and referred to as "other" or "
   secondary" scans for a given session.
-- **[VisualQC](https://raamana.github.io/visualqc):** A suite of QC tools developed by Pradeep Raamana (assistant
+- **[VisualQC](https://raamana.github.io/visualqc):** A suite of QC tools developed by Pradeep Raamana (Assistant
   Professor at University of Pittsburgh). While a noun, it's sometimes also used as a verb to refer to "QC-ing scans
   visually". Within the team, a sentence like "We'll be Visual QC-ing primary scans." means that we'll be eyeball-ing
   the primary scans using VisualQC.
