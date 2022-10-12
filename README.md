@@ -19,7 +19,7 @@ The defacing workflow for datasets curated by the Data Science and Sharing Team 
   recently acquired T1w scan is of the best quality.
 - **Other/Secondary Scans:** All scans *except* the primary scan are grouped together and referred to as "other" or "
   secondary" scans for a given session.
-- **[VisualQC](https://raamana.github.io/visualqc):** A suite of QC tools developed by Pradeep Ramanna (assistant
+- **[VisualQC](https://raamana.github.io/visualqc):** A suite of QC tools developed by Pradeep Raamana (assistant
   Professor at University of Pittsburgh). While a noun, it's sometimes also used as a verb to refer to "QC-ing scans
   visually". Within the team, a sentence like "We'll be Visual QC-ing primary scans." means that we'll be eyeball-ing
   the primary scans using VisualQC.
@@ -78,12 +78,19 @@ Example:
 python generate_mappings.py -i /data/NIMH_scratch/defacing_comparisons/code/code_refactoring/defacing_wf_data/as_toy_data/ -o scripts_outputs
 ```
 
+For sessions with T1w images, the user can quality check using the visualqc command output by the script. Here's an
+example of what the command might look like:
+
+```bash
+visualqc_t1_mri -u /gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/code/code_refactoring/dsst_defacing_wf/scripts_outputs_testing/visualqc_prep/t1_mri -i /gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/code/code_refactoring/dsst_defacing_wf/scripts_outputs_testing/visualqc_prep/id_list_t1.txt -m primary.nii.gz
+```
+
 ### **2:** Actually deface scans.
 
 At this point, a big chunk of the job is done. Run `main.py` script that calls on `deface.py` and `register.py` to
 deface scans in the dataset.
 
-```bash
+```
 usage: main.py [-h] --input INPUT --output OUTPUT --mapping-file MAPPING [--subject-id SUBJID]
 
 Deface anatomical scans for a given BIDS dataset or a subject directory in BIDS format.
@@ -109,6 +116,30 @@ python main.py -i /data/NIMH_scratch/defacing_comparisons/code/code_refactoring/
 
 ### **3:** Visually QC defaced scans.
 
+To use VisualQC, the command line utilities will need to be installed. Please refer
+to [VisualQC's documentation](https://raamana.github.io/visualqc/installation.html) for
+installation instructions.
+
+#### Primary Scans
+
+The following criteria was used to judge the success of defacing:
+
+* No brain tissue had been removed during defacing
+* The 3D render didn’t contain more than one partial feature (eyes, nose or mouth)
+
+Example:
+
+```bash
+vqcdeface -u /data/NIMH_scratch/defacing_comparisons/autism_subtypes/defacing_outputs \
+-m tmp.00.INPUT_iso_1mm.nii.gz -d tmp.99.result.deface_iso_1mm.nii.gz \
+-r tmp.99.result.deface_iso_1mm_render \
+-o visualqc -i as_visualqc_arsh.txt
+```
+
+#### "Other"/Secondary Scans
+
+Evaluate registration accuracy of ["other"](#terminology) scans within the session to the chosen primary scan.
+
 ```bash
 ```
 
@@ -125,14 +156,15 @@ that includes brief accounts of decisions made, other meeting notes and a genera
    12:617997. doi:10.3389/fpsyt.2021.617997
 2. The workflow is developed around
    the [AFNI Refacer program](https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/tutorials/refacer/refacer_run.html).
-2. FSL's [`flirt`](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FLIRT)
+3. FSL's [`flirt`](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FLIRT)
    and [`fslmaths`](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils?highlight=%28fslmaths%29) programs have been used
    for registration and masking steps in the workflow.
-3. VisualQC's T1 MRI utility.
-4. VisualQC's defacing quality checker utility.
-5. VisualQC's alignment quality checker utility.
-6. [Skullstripping](https://andysbrainbook.readthedocs.io/en/latest/fMRI_Short_Course/Preprocessing/Skull_Stripping.html)
-7. [Relevant thread about 3dSkullStrip on AFNI message board](https://afni.nimh.nih.gov/afni/community/board/read.php?1,159053,159053#msg-159053)
+4. [VisualQC's T1 MRI](https://raamana.github.io/visualqc/gallery_t1_mri.html) utility.
+5. [VisualQC's defacing accuracy checker](https://raamana.github.io/visualqc/gallery_defacing.html) utility.
+6. [VisualQC's alignment quality checker](https://raamana.github.io/visualqc/gallery_registration_unimodal.html)
+   utility.
+7. [Skullstripping](https://andysbrainbook.readthedocs.io/en/latest/fMRI_Short_Course/Preprocessing/Skull_Stripping.html)
+8. [Relevant thread about 3dSkullStrip on AFNI message board](https://afni.nimh.nih.gov/afni/community/board/read.php?1,159053,159053#msg-159053)
 
 ## Acknowledgements
 
