@@ -12,6 +12,36 @@ The defacing workflow for datasets curated by the Data Science and Sharing Team 
    for this step.
 
 **NOTE:** It's assumed throughout this document that the input dataset to defacing algorithm is in BIDS valid format.
+Here's an example of a BIDS tree:
+
+```bash
+input_bids_dataset
+├── dataset_description.json
+├── README
+├── sub-ON02747
+│   └── ses-01
+│       ├── anat
+│       │   ├── sub-ON02747_ses-01_acq-CUBE_T2w.json
+│       │   ├── sub-ON02747_ses-01_acq-CUBE_T2w.nii.gz
+│       │   ├── sub-ON02747_ses-01_acq-MPRAGE_T1w.json
+│       │   ├── sub-ON02747_ses-01_acq-MPRAGE_T1w.nii.gz
+│       │   ├── sub-ON02747_ses-01_rec-SCIC_T2starw.json
+│       │   └── sub-ON02747_ses-01_rec-SCIC_T2starw.nii.gz
+│       ├── func
+│       │   ├── sub-ON02747_ses-01_task-rest_dir-forward_bold.json
+│       │   ├── sub-ON02747_ses-01_task-rest_dir-forward_bold.nii.gz
+│       │   ├── sub-ON02747_ses-01_task-rest_dir-reverse_bold.json
+│       │   └── sub-ON02747_ses-01_task-rest_dir-reverse_bold.nii.gz
+│       └── perf
+│           ├── sub-ON02747_ses-01_asl.json
+│           └── sub-ON02747_ses-01_asl.nii.gz
+│── sub-ON02811
+│── sub-ON03748
+...
+├── sub-ON99620
+└── sub-ON99871
+
+```
 
 ## Terminology
 
