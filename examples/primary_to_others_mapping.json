@@ -1,0 +1,32 @@
+{
+    "sub-ON02747": {
+        "ses-01": {
+            "primary_t1": "/users/NIMH_scratch/defacing_comparisons/defacing_wf_data/toy_data/sub-ON02747/ses-01/anat/sub-ON02747_ses-01_acq-MPRAGE_T1w.nii.gz",
+            "others": [
+                "/users/NIMH_scratch/defacing_wf_data/toy_data/sub-ON02747/ses-01/anat/sub-ON02747_ses-01_acq-CUBE_T2w.nii.gz",
+                "/users/NIMH_scratch/defacing_wf_data/toy_data/sub-ON02747/ses-01/anat/sub-ON02747_ses-01_rec-SCIC_T2starw.nii.gz"
+            ]
+        }
+    },
+    "sub-ON03748": {
+        "ses-02": {
+            "primary_t1": "/users/NIMH_scratch/defacing_wf_data/toy_data/sub-ON03748/ses-02/anat/sub-ON03748_ses-02_acq-OddSlices_T1w.nii.gz",
+            "others": [
+                "/users/NIMH_scratch/defacing_wf_data/toy_data/sub-ON03748/ses-02/anat/sub-ON03748_ses-02_acq-axial_T1w.nii.gz",
+                "/users/NIMH_scratch/defacing_wf_data/toy_data/sub-ON03748/ses-02/anat/sub-ON03748_ses-02_acq-AxialFSE_T2w.nii.gz",
+                "/users/NIMH_scratch/defacing_wf_data/toy_data/sub-ON03748/ses-02/anat/sub-ON03748_ses-02_acq-coronal_FLAIR.nii.gz",
+                "/users/NIMH_scratch/defacing_wf_data/toy_data/sub-ON03748/ses-02/anat/sub-ON03748_ses-02_acq-AxialLowres_PDw.nii.gz",
+                "/users/NIMH_scratch/defacing_wf_data/toy_data/sub-ON03748/ses-02/anat/sub-ON03748_ses-02_acq-AxialLowres_T2w.nii.gz"
+            ]
+        },
+        "ses-01": {
+            "primary_t1": "",
+            "others": [
+                "/users/NIMH_scratch/defacing_wf_data/toy_data/sub-ON03748/ses-01/anat/sub-ON03748_ses-01_acq-AxialLowres_T2w.nii.gz",
+                "/users/NIMH_scratch/defacing_wf_data/toy_data/sub-ON03748/ses-01/anat/sub-ON03748_ses-01_acq-axial_mt-off_MTR.nii.gz",
+                "/users/NIMH_scratch/defacing_wf_data/toy_data/sub-ON03748/ses-01/anat/sub-ON03748_ses-01_acq-AxialLowres_PDw.nii.gz",
+                "/users/NIMH_scratch/defacing_wf_data/toy_data/sub-ON03748/ses-01/anat/sub-ON03748_ses-01_acq-axial_mt-on_MTR.nii.gz"
+            ]
+        }
+    }
+}
