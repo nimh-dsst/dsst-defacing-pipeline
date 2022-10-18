@@ -188,16 +188,21 @@ def update_mapping_dict(mapping_dict, anat_dir, is_sessions, sidecars, t1_unavai
 
 def summary_to_stdout(vqc_t1_cmd, sess_ct, t1s_found, t1s_not_found, output):
     readable_path_list = ['/'.join([path.parent.name, path.name]) for path in t1s_not_found]
-    print(f"==================================\nVisualQC's visualqc_t1_mri command\n==================================")
+    print(
+        f"""==================================\n
+        VisualQC's visualqc_t1_mri command\n
+        ==================================""")
     print(f"Run the following command to QC primary scans:\n {vqc_t1_cmd}\n")
 
-    print(f"====================\nDataset Summary\n====================")
+    print(f"""====================\n
+    Dataset Summary\n
+    ====================""")
     print(f"Total number of sessions in the dataset: {sess_ct}")
     print(f"Total number of sessions with at least one T1w scan: {len(t1s_found)}")
     print(f"Total number of sessions WITHOUT a T1w scan: {len(t1s_not_found)}")
     print(f"List of sessions without a T1w scan:\n {readable_path_list}\n")
 
-    print(f"Please find the mapping file JSON format and other helpful logs at {str(output)}.\n")
+    print(f"Please find the mapping file in JSON format and other helpful logs at {str(output)}.\n")
 
 
 def main():
