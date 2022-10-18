@@ -1,1 +1,1 @@
-/gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/code/code_refactoring/defacing_wf_data/as_toy_data/sub-NDARBN729RG0/ses-01
+/users/NIMH_scratch/defacing_wf_data/toy_data/sub-ON03748/ses-01/
