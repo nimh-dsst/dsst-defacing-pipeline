@@ -1,1 +1,13 @@
-/users/NIMH_scratch/defacing_wf_data/toy_data/sub-ON03748/ses-01/
+/gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/autism_subtypes/bids_20220527/sub-NDAREM381WD9/ses-01
+/gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/autism_subtypes/bids_20220527/sub-NDARINVKO353UAS/ses-01
+/gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/autism_subtypes/bids_20220527/sub-NDARBN729RG0/ses-01
+/gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/autism_subtypes/bids_20220527/sub-NDARINVHE728FXQ/ses-01
+/gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/autism_subtypes/bids_20220527/sub-NDARVG708MPB/ses-01
+/gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/autism_subtypes/bids_20220527/sub-NDARINVSE216ZSO/ses-02
+/gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/autism_subtypes/bids_20220527/sub-NDARZN020RY3/ses-04
+/gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/autism_subtypes/bids_20220527/sub-NDARWF021EZF/ses-01
+/gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/autism_subtypes/bids_20220527/sub-NDARBP915LD8/ses-01
+/gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/autism_subtypes/bids_20220527/sub-NDARWE296DLJ/ses-01
+/gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/autism_subtypes/bids_20220527/sub-NDARYN672VGP/ses-02
+/gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/autism_subtypes/bids_20220527/sub-NDARNB146TBN/ses-01
+/gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/autism_subtypes/bids_20220527/sub-NDARTX478BEP/ses-02
