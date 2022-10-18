@@ -1,0 +1,33 @@
+{
+    "sub-NDARBN729RG0": {
+        "ses-01": {
+            "primary_t1": "",
+            "others": [
+                "/gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/code/code_refactoring/defacing_wf_data/as_toy_data/sub-NDARBN729RG0/ses-01/anat/sub-NDARBN729RG0_ses-01_acq-axial_mt-off_MTR.nii.gz",
+                "/gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/code/code_refactoring/defacing_wf_data/as_toy_data/sub-NDARBN729RG0/ses-01/anat/sub-NDARBN729RG0_ses-01_acq-AxialLowres_T2w.nii.gz",
+                "/gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/code/code_refactoring/defacing_wf_data/as_toy_data/sub-NDARBN729RG0/ses-01/anat/sub-NDARBN729RG0_ses-01_acq-AxialLowres_PDw.nii.gz"
+            ]
+        }
+    },
+    "sub-NDARKA785ANB": {
+        "ses-02": {
+            "primary_t1": "/gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/code/code_refactoring/defacing_wf_data/as_toy_data/sub-NDARKA785ANB/ses-02/anat/sub-NDARKA785ANB_ses-02_acq-OddSlices_T1w.nii.gz",
+            "others": [
+                "/gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/code/code_refactoring/defacing_wf_data/as_toy_data/sub-NDARKA785ANB/ses-02/anat/sub-NDARKA785ANB_ses-02_acq-axial_T1w.nii.gz",
+                "/gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/code/code_refactoring/defacing_wf_data/as_toy_data/sub-NDARKA785ANB/ses-02/anat/sub-NDARKA785ANB_ses-02_acq-AxialFSE_T2w.nii.gz",
+                "/gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/code/code_refactoring/defacing_wf_data/as_toy_data/sub-NDARKA785ANB/ses-02/anat/sub-NDARKA785ANB_ses-02_acq-coronal_FLAIR.nii.gz",
+                "/gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/code/code_refactoring/defacing_wf_data/as_toy_data/sub-NDARKA785ANB/ses-02/anat/sub-NDARKA785ANB_ses-02_acq-AxialLowres_PDw.nii.gz",
+                "/gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/code/code_refactoring/defacing_wf_data/as_toy_data/sub-NDARKA785ANB/ses-02/anat/sub-NDARKA785ANB_ses-02_acq-AxialLowres_T2w.nii.gz"
+            ]
+        },
+        "ses-01": {
+            "primary_t1": "/gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/code/code_refactoring/defacing_wf_data/as_toy_data/sub-NDARKA785ANB/ses-01/anat/sub-NDARKA785ANB_ses-01_acq-axial_T1w.nii.gz",
+            "others": [
+                "/gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/code/code_refactoring/defacing_wf_data/as_toy_data/sub-NDARKA785ANB/ses-01/anat/sub-NDARKA785ANB_ses-01_acq-AxialLowres_T2w.nii.gz",
+                "/gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/code/code_refactoring/defacing_wf_data/as_toy_data/sub-NDARKA785ANB/ses-01/anat/sub-NDARKA785ANB_ses-01_acq-axial_mt-off_MTR.nii.gz",
+                "/gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/code/code_refactoring/defacing_wf_data/as_toy_data/sub-NDARKA785ANB/ses-01/anat/sub-NDARKA785ANB_ses-01_acq-AxialLowres_PDw.nii.gz",
+                "/gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/code/code_refactoring/defacing_wf_data/as_toy_data/sub-NDARKA785ANB/ses-01/anat/sub-NDARKA785ANB_ses-01_acq-axial_mt-on_MTR.nii.gz"
+            ]
+        }
+    }
+}
