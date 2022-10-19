@@ -102,18 +102,30 @@ optional arguments:
 
 ```
 
-Example:
+Example command and it's stdout:
 
-```bash
-python generate_mappings.py -i /data/NIMH_scratch/defacing_comparisons/code/code_refactoring/defacing_wf_data/as_toy_data/ -o scripts_outputs
+```
+(conda)[arshithab@helix dsst_defacing_wf]$ python generate_mappings.py -i /data/NIMH_scratch/defacing_comparisons/autism_subtypes/bids_20220527 -o examples/
+==================================
+VisualQC's visualqc_t1_mri command
+==================================
+Run the following command to QC primary scans:
+ visualqc_t1_mri -u /gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/code/code_refactoring/dsst_defacing_wf/examples/visualqc_prep/t1_mri -i /gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/code/code_refactoring/dsst_defacing_wf/examples/visualqc_prep/id_list_t1.txt -m primary.nii.gz
+
+====================
+Dataset Summary
+====================
+Total number of sessions in the dataset: 263
+Total number of sessions with at least one T1w scan: 250
+Total number of sessions WITHOUT a T1w scan: 13
+List of sessions without a T1w scan:
+ ['sub-NDAREM381WD9/ses-01', 'sub-NDARINVKO353UAS/ses-01', 'sub-NDARBN729RG0/ses-01', 'sub-NDARINVHE728FXQ/ses-01', 'sub-NDARVG708MPB/ses-01', 'sub-NDARINVSE216ZSO/ses-02', 'sub-NDARZN020RY3/ses-04', 'sub-NDARWF021EZF/ses-01', 'sub-NDARBP915LD8/ses-01', 'sub-NDARWE296DLJ/ses-01', 'sub-NDARYN672VGP/ses-02', 'sub-NDARNB146TBN/ses-01', 'sub-NDARTX478BEP/ses-02']
+
+Please find the mapping file in JSON format and other helpful logs at /gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/code/code_refactoring/dsst_defacing_wf/examples.
 ```
 
-For sessions with T1w images, the user can quality check using the visualqc command output by the script. Here's an
-example of what the command might look like:
-
-```bash
-visualqc_t1_mri -u /gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/code/code_refactoring/dsst_defacing_wf/scripts_outputs_testing/visualqc_prep/t1_mri -i /gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/code/code_refactoring/dsst_defacing_wf/scripts_outputs_testing/visualqc_prep/id_list_t1.txt -m primary.nii.gz
-```
+For sessions with T1w images, the user can quality check using the visualqc command output by the script. See above for
+an example.
 
 ### **2:** Actually deface scans.
 

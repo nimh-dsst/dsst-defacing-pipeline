@@ -1,1 +1,1 @@
-visualqc_t1_mri -u /users/NIMH_scratch/examples/visualqc_prep/t1_mri -i /users/NIMH_scratch/examples/visualqc_prep/id_list_t1.txt -m primary.nii.gz
+visualqc_t1_mri -u /gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/code/code_refactoring/dsst_defacing_wf/examples/visualqc_prep/t1_mri -i /gpfs/gsfs12/users/NIMH_scratch/defacing_comparisons/code/code_refactoring/dsst_defacing_wf/examples/visualqc_prep/id_list_t1.txt -m primary.nii.gz

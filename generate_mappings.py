@@ -145,7 +145,7 @@ def get_anat_dir_paths(subj_dir_path):
     return anat_dirs, sess_exist
 
 
-def update_mapping_dict(mapping_dict, anat_dir, is_sessions, sidecars, t1_unavailable):
+def update_mapping_dict(mapping_dict, anat_dir, is_sessions, sidecars, t1_unavailable, t1_available):
     """Updates mapping dictionary for a given subject's or session's anatomical directory.
 
     :param defaultdict mapping_dict: A dictionary with primary to others mapping information.
@@ -157,7 +157,8 @@ def update_mapping_dict(mapping_dict, anat_dir, is_sessions, sidecars, t1_unavai
     :return defaultdict mapping_dict: An updated dictionary with primary to others mapping information.
     :return list t1_unavailable: An updated list of subject/session directory paths that don't have a T1w scan.
     """
-    subjid = anat_dir.parent.parent.name
+
+    subjid = [p for p in anat_dir.parts if p.startswith('sub-')][0]
 
     if sidecars:
         t1_acq_time_list = sort_by_acq_time(sidecars)
@@ -167,10 +168,11 @@ def update_mapping_dict(mapping_dict, anat_dir, is_sessions, sidecars, t1_unavai
 
         primary_t1 = t1_acq_time_list[0][0].parent.joinpath(nifti_fname)
         others = [str(s) for s in list(anat_dir.glob('*.nii*')) if s != primary_t1]
+        t1_available.append(anat_dir.parent)
     else:
-        t1_unavailable.append(anat_dir.parent)
         primary_t1 = ""
         others = [str(s) for s in list(anat_dir.glob('*.nii*'))]
+        t1_unavailable.append(anat_dir.parent)
 
     # updating mapping dict
     if is_sessions:
@@ -181,22 +183,46 @@ def update_mapping_dict(mapping_dict, anat_dir, is_sessions, sidecars, t1_unavai
         mapping_dict[subjid]['primary_t1'] = str(primary_t1)
         mapping_dict[subjid]['others'] = others
 
-    return mapping_dict, t1_unavailable
+    return mapping_dict, t1_unavailable, t1_available
+
+
+def summary_to_stdout(vqc_t1_cmd, sess_ct, t1s_found, t1s_not_found, output):
+    readable_path_list = ['/'.join([path.parent.name, path.name]) for path in t1s_not_found]
+    print(
+        f"""==================================\n
+        VisualQC's visualqc_t1_mri command\n
+        ==================================""")
+    print(f"Run the following command to QC primary scans:\n {vqc_t1_cmd}\n")
+
+    print(f"""====================\n
+    Dataset Summary\n
+    ====================""")
+    print(f"Total number of sessions in the dataset: {sess_ct}")
+    print(f"Total number of sessions with at least one T1w scan: {len(t1s_found)}")
+    print(f"Total number of sessions WITHOUT a T1w scan: {len(t1s_not_found)}")
+    print(f"List of sessions without a T1w scan:\n {readable_path_list}\n")
+
+    print(f"Please find the mapping file in JSON format and other helpful logs at {str(output)}\n")
 
 
 def main():
     input, output = get_args()
 
     # input_layout = bids.BIDSLayout(input) # taking insane amounts of time so not using pybids
-    t1w_scan_not_found = []
+    t1s_not_found = []
+    t1s_found = []
+    total_sessions = 0
+
     mapping_dict = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
 
     for subj_dir in list(input.glob('sub-*')):
         anat_dirs, sess_exist = get_anat_dir_paths(subj_dir)
         for anat_dir in anat_dirs:
+            total_sessions += 1
             t1_sidecars = list(anat_dir.glob('*T1w.json'))
-            mapping_dict, t1w_scan_not_found = update_mapping_dict(mapping_dict, anat_dir, sess_exist, t1_sidecars,
-                                                                   t1w_scan_not_found)
+            mapping_dict, t1s_not_found, t1s_found = update_mapping_dict(mapping_dict, anat_dir, sess_exist,
+                                                                         t1_sidecars,
+                                                                         t1s_not_found, t1s_found)
 
     # write mapping dict to file
     with open(output.joinpath('primary_to_others_mapping.json'), 'w') as f1:
@@ -204,7 +230,7 @@ def main():
 
     # write session paths without T1w scan to file
     with open(output.joinpath('t1_unavailable.txt'), 'w') as f2:
-        for sess_path in t1w_scan_not_found:
+        for sess_path in t1s_not_found:
             f2.write(str(sess_path) + '\n')
 
     # write vqc command to file
@@ -212,8 +238,7 @@ def main():
     with open(output.joinpath('visualqc_t1_mri_cmd'), 'w') as f3:
         f3.write(f"{vqc_t1_mri_cmd}\n")
 
-    print(
-        f"\nVisualQC's visualqc_t1_mri utility can be used to QC primary scans with the following command.\n {vqc_t1_mri_cmd}")
+    summary_to_stdout(vqc_t1_mri_cmd, total_sessions, t1s_found, t1s_not_found, output)
 
 
 if __name__ == "__main__":
