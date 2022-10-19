@@ -202,7 +202,7 @@ def summary_to_stdout(vqc_t1_cmd, sess_ct, t1s_found, t1s_not_found, output):
     print(f"Total number of sessions WITHOUT a T1w scan: {len(t1s_not_found)}")
     print(f"List of sessions without a T1w scan:\n {readable_path_list}\n")
 
-    print(f"Please find the mapping file in JSON format and other helpful logs at {str(output)}.\n")
+    print(f"Please find the mapping file in JSON format and other helpful logs at {str(output)}\n")
 
 
 def main():
