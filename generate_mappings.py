@@ -112,9 +112,10 @@ def sort_by_acq_time(sidecars):
         data = json.load(sidecar_fobj)
         acq_time_dict[sidecar] = data["AcquisitionTime"]
 
-        acq_time_sorted_list = sorted(acq_time_dict.items(), key=lambda key_val_tup: key_val_tup[1],
-                                      reverse=True)
-        return acq_time_sorted_list
+    acq_time_sorted_list = sorted(acq_time_dict.items(), key=lambda key_val_tup: key_val_tup[1], reverse=True)
+    print(acq_time_sorted_list)
+    print()
+    return acq_time_sorted_list
 
 
 def get_anat_dir_paths(subj_dir_path):
