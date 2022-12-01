@@ -1,4 +1,4 @@
-# DSST Defacing Workflow
+# DSST Defacing Pipeline
 
 The defacing workflow for datasets curated by the Data Science and Sharing Team will be completed in three major steps.
 
