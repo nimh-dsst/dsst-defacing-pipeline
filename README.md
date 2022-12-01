@@ -185,11 +185,6 @@ Evaluate registration accuracy of ["other"](#terminology) scans within the sessi
 ```bash
 ```
 
-## Project History
-
-A [documentation of project's history](https://docs.google.com/document/d/1up749OPH3IZf4WNpak9HRQ2qe4-zZI2FYKr6axN90qw/edit?usp=sharing)
-that includes brief accounts of decisions made, other meeting notes and a general timeline of the project
-
 ## References
 
 1. Theyers AE, Zamyadi M, O'Reilly M, Bartha R, Symons S, MacQueen GM, Hassel S, Lerch JP, Anagnostou E, Lam RW, Frey
