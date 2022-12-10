@@ -113,8 +113,8 @@ def sort_by_acq_time(sidecars):
         acq_time_dict[sidecar] = data["AcquisitionTime"]
 
     acq_time_sorted_list = sorted(acq_time_dict.items(), key=lambda key_val_tup: key_val_tup[1], reverse=True)
-    print(acq_time_sorted_list)
-    print()
+    # print(acq_time_sorted_list)
+    # print()
     return acq_time_sorted_list
 
 
@@ -125,6 +125,7 @@ def get_anat_dir_paths(subj_dir_path):
     :return: A list of absolute paths to anat directory(s) within subject tree.
     """
     anat_dirs = []
+    no_anat_dirs = []
 
     # check if there are session directories
     # sess_exist, sessions = is_sessions(subj_dir_path)
@@ -134,16 +135,18 @@ def get_anat_dir_paths(subj_dir_path):
     if not sess_exist:
         anat_dir = subj_dir_path.joinpath('anat')
         if not anat_dir.exists():
-            print(f'No anat directories found for {subj_dir_path.name}.\n')
+            # print(f'No anat directories found for {subj_dir_path.name}.\n')
+            no_anat_dirs.append(subj_dir_path)
         anat_dirs.append(anat_dir)
     else:
         for sess in sessions:
             anat_dir = sess.joinpath('anat')
             if not anat_dir.exists():
-                print(f'No anat directories found for {subj_dir_path.name} and {sess.name}.\n')
+                # print(f'No anat directories found for {subj_dir_path.name} and {sess.name}.\n')
+                no_anat_dirs.append(sess)
             anat_dirs.append(anat_dir)
 
-    return anat_dirs, sess_exist
+    return anat_dirs, no_anat_dirs, sess_exist
 
 
 def update_mapping_dict(mapping_dict, anat_dir, is_sessions, sidecars, t1_unavailable, t1_available):
@@ -187,22 +190,21 @@ def update_mapping_dict(mapping_dict, anat_dir, is_sessions, sidecars, t1_unavai
     return mapping_dict, t1_unavailable, t1_available
 
 
-def summary_to_stdout(vqc_t1_cmd, sess_ct, t1s_found, t1s_not_found, output):
+def summary_to_stdout(vqc_t1_cmd, sess_ct, t1s_found, t1s_not_found, no_anat_dirs, output):
     readable_path_list = ['/'.join([path.parent.name, path.name]) for path in t1s_not_found]
-    print(
-        f"""==================================\n
-        VisualQC's visualqc_t1_mri command\n
-        ==================================""")
+    print(f"==================================")
+    print(f"VisualQC's visualqc_t1_mri command")
+    print(f"==================================")
     print(f"Run the following command to QC primary scans:\n {vqc_t1_cmd}\n")
 
-    print(f"""====================\n
-    Dataset Summary\n
-    ====================""")
+    print(f"====================")
+    print(f"Dataset Summary")
+    print(f"====================")
     print(f"Total number of sessions in the dataset: {sess_ct}")
-    print(f"Total number of sessions with at least one T1w scan: {len(t1s_found)}")
-    print(f"Total number of sessions WITHOUT a T1w scan: {len(t1s_not_found)}")
-    print(f"List of sessions without a T1w scan:\n {readable_path_list}\n")
-
+    print(f"Sessions with 'anat' directory: {sess_ct - len(no_anat_dirs)}")
+    print(f"Sessions with 'anat' directory with at least one T1w scan: {len(t1s_found)}")
+    # print(f"Sessions with 'anat' directory without a T1w scan: {len(t1s_not_found)}")
+    # print(f"List of sessions without a T1w scan:\n {readable_path_list}\n")
     print(f"Please find the mapping file in JSON format and other helpful logs at {str(output)}\n")
 
 
@@ -217,13 +219,12 @@ def main():
     mapping_dict = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
 
     for subj_dir in list(input.glob('sub-*')):
-        anat_dirs, sess_exist = get_anat_dir_paths(subj_dir)
+        anat_dirs, no_anat_dirs, sess_exist = get_anat_dir_paths(subj_dir)
         for anat_dir in anat_dirs:
             total_sessions += 1
             t1_sidecars = list(anat_dir.glob('*T1w.json'))
             mapping_dict, t1s_not_found, t1s_found = update_mapping_dict(mapping_dict, anat_dir, sess_exist,
-                                                                         t1_sidecars,
-                                                                         t1s_not_found, t1s_found)
+                                                                         t1_sidecars, t1s_not_found, t1s_found)
 
     # write mapping dict to file
     with open(output.joinpath('primary_to_others_mapping.json'), 'w') as f1:
@@ -239,7 +240,11 @@ def main():
     with open(output.joinpath('visualqc_t1_mri_cmd'), 'w') as f3:
         f3.write(f"{vqc_t1_mri_cmd}\n")
 
-    summary_to_stdout(vqc_t1_mri_cmd, total_sessions, t1s_found, t1s_not_found, output)
+    with open(output.joinpath('anat_unavailable.txt'), 'w') as f4:
+        for p in no_anat_dirs:
+            f4.write(str(p) + '\n')
+
+    summary_to_stdout(vqc_t1_mri_cmd, total_sessions, t1s_found, t1s_not_found, no_anat_dirs, output)
 
 
 if __name__ == "__main__":

@@ -30,7 +30,6 @@
 /Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-096
 /Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-091
 /Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-065
-/Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-053
 /Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-098
 /Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-054
 /Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-038
@@ -54,7 +53,6 @@
 /Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-073
 /Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-087
 /Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-020
-/Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-016
 /Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-029
 /Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-101
 /Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-100
