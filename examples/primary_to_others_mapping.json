@@ -1,58 +1,10 @@
 {
     "sub-01": {
-        "ses-014": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-013": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-025": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-022": {
-            "primary_t1": "",
-            "others": []
-        },
         "ses-049": {
             "primary_t1": "/Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-049/anat/sub-01_ses-049_T1w.nii.gz",
             "others": [
                 "/Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-049/anat/sub-01_ses-049_T2w.nii.gz"
             ]
-        },
-        "ses-076": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-082": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-085": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-071": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-078": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-047": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-040": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-023": {
-            "primary_t1": "",
-            "others": []
         },
         "ses-024": {
             "primary_t1": "/Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-024/anat/sub-01_ses-024_T1w.nii.gz",
@@ -76,62 +28,14 @@
                 "/Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-041/anat/sub-01_ses-041_T2w.nii.gz"
             ]
         },
-        "ses-079": {
-            "primary_t1": "",
-            "others": []
-        },
         "ses-046": {
             "primary_t1": "/Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-046/anat/sub-01_ses-046_T1w.nii.gz",
             "others": [
                 "/Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-046/anat/sub-01_ses-046_T2w.nii.gz"
             ]
         },
-        "ses-070": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-084": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-048": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-083": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-077": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-102": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-103": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-104": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-055": {
-            "primary_t1": "",
-            "others": []
-        },
         "ses-052": {
             "primary_t1": "/Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-052/anat/sub-01_ses-052_T1w.nii.gz",
-            "others": []
-        },
-        "ses-099": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-064": {
-            "primary_t1": "",
             "others": []
         },
         "ses-090": {
@@ -140,20 +44,8 @@
                 "/Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-090/anat/sub-01_ses-090_T2w.nii.gz"
             ]
         },
-        "ses-097": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-063": {
-            "primary_t1": "",
-            "others": []
-        },
         "ses-008": {
             "primary_t1": "/Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-008/anat/sub-01_ses-008_T1w.nii.gz",
-            "others": []
-        },
-        "ses-037": {
-            "primary_t1": "",
             "others": []
         },
         "ses-030": {
@@ -161,10 +53,6 @@
             "others": [
                 "/Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-030/anat/sub-01_ses-030_T2w.nii.gz"
             ]
-        },
-        "ses-039": {
-            "primary_t1": "",
-            "others": []
         },
         "ses-006": {
             "primary_t1": "/Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-006/anat/sub-01_ses-006_T1w.nii.gz",
@@ -174,77 +62,17 @@
             "primary_t1": "/Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-001/anat/sub-01_ses-001_T1w.nii.gz",
             "others": []
         },
-        "ses-062": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-096": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-091": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-065": {
-            "primary_t1": "",
-            "others": []
-        },
         "ses-053": {
             "primary_t1": "",
             "others": [
                 "/Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-053/anat/sub-01_ses-053_T2w.nii.gz"
             ]
         },
-        "ses-098": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-054": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-038": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-031": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-009": {
-            "primary_t1": "",
-            "others": []
-        },
         "ses-036": {
             "primary_t1": "/Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-036/anat/sub-01_ses-036_T1w.nii.gz",
             "others": [
                 "/Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-036/anat/sub-01_ses-036_T2w.nii.gz"
             ]
-        },
-        "ses-086": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-072": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-075": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-081": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-088": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-043": {
-            "primary_t1": "",
-            "others": []
         },
         "ses-044": {
             "primary_t1": "/Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-044/anat/sub-01_ses-044_T1w.nii.gz",
@@ -256,55 +84,11 @@
             "primary_t1": "/Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-010/anat/sub-01_ses-010_T1w.nii.gz",
             "others": []
         },
-        "ses-017": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-028": {
-            "primary_t1": "",
-            "others": []
-        },
         "ses-021": {
             "primary_t1": "/Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-021/anat/sub-01_ses-021_T1w.nii.gz",
             "others": [
                 "/Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-021/anat/sub-01_ses-021_T2w.nii.gz"
             ]
-        },
-        "ses-026": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-019": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-045": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-089": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-042": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-080": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-074": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-073": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-087": {
-            "primary_t1": "",
-            "others": []
         },
         "ses-027": {
             "primary_t1": "/Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-027/anat/sub-01_ses-027_T1w.nii.gz",
@@ -318,19 +102,11 @@
                 "/Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-018/anat/sub-01_ses-018_T2w.nii.gz"
             ]
         },
-        "ses-020": {
-            "primary_t1": "",
-            "others": []
-        },
         "ses-016": {
             "primary_t1": "",
             "others": [
                 "/Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-016/anat/sub-01_ses-016_T2w.nii.gz"
             ]
-        },
-        "ses-029": {
-            "primary_t1": "",
-            "others": []
         },
         "ses-011": {
             "primary_t1": "/Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-011/anat/sub-01_ses-011_T1w.nii.gz",
@@ -338,16 +114,8 @@
                 "/Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-011/anat/sub-01_ses-011_T2w.nii.gz"
             ]
         },
-        "ses-101": {
-            "primary_t1": "",
-            "others": []
-        },
         "ses-107": {
             "primary_t1": "/Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-107/anat/sub-01_ses-107_T1w.nii.gz",
-            "others": []
-        },
-        "ses-100": {
-            "primary_t1": "",
             "others": []
         },
         "ses-033": {
@@ -356,88 +124,8 @@
                 "/Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-033/anat/sub-01_ses-033_T2w.nii.gz"
             ]
         },
-        "ses-034": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-051": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-056": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-069": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-094": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-060": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-067": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-093": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-058": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-004": {
-            "primary_t1": "",
-            "others": []
-        },
         "ses-003": {
             "primary_t1": "/Users/arshithab/Desktop/OneDesk/Projects/datasets/ds000031/sub-01/ses-003/anat/sub-01_ses-003_T1w.nii.gz",
-            "others": []
-        },
-        "ses-035": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-032": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-092": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-066": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-059": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-061": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-095": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-057": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-068": {
-            "primary_t1": "",
-            "others": []
-        },
-        "ses-050": {
-            "primary_t1": "",
             "others": []
         }
     }

@@ -113,8 +113,6 @@ def sort_by_acq_time(sidecars):
         acq_time_dict[sidecar] = data["AcquisitionTime"]
 
     acq_time_sorted_list = sorted(acq_time_dict.items(), key=lambda key_val_tup: key_val_tup[1], reverse=True)
-    # print(acq_time_sorted_list)
-    # print()
     return acq_time_sorted_list
 
 
@@ -137,14 +135,16 @@ def get_anat_dir_paths(subj_dir_path):
         if not anat_dir.exists():
             # print(f'No anat directories found for {subj_dir_path.name}.\n')
             no_anat_dirs.append(subj_dir_path)
-        anat_dirs.append(anat_dir)
+        else:
+            anat_dirs.append(anat_dir)
     else:
         for sess in sessions:
             anat_dir = sess.joinpath('anat')
             if not anat_dir.exists():
                 # print(f'No anat directories found for {subj_dir_path.name} and {sess.name}.\n')
                 no_anat_dirs.append(sess)
-            anat_dirs.append(anat_dir)
+            else:
+                anat_dirs.append(anat_dir)
 
     return anat_dirs, no_anat_dirs, sess_exist
 
@@ -200,11 +200,10 @@ def summary_to_stdout(vqc_t1_cmd, sess_ct, t1s_found, t1s_not_found, no_anat_dir
     print(f"====================")
     print(f"Dataset Summary")
     print(f"====================")
-    print(f"Total number of sessions in the dataset: {sess_ct}")
-    print(f"Sessions with 'anat' directory: {sess_ct - len(no_anat_dirs)}")
+    print(f"Total number of sessions with 'anat' directory in the dataset: {sess_ct}")
     print(f"Sessions with 'anat' directory with at least one T1w scan: {len(t1s_found)}")
-    # print(f"Sessions with 'anat' directory without a T1w scan: {len(t1s_not_found)}")
-    # print(f"List of sessions without a T1w scan:\n {readable_path_list}\n")
+    print(f"Sessions without a T1w scan: {len(t1s_not_found)}")
+    print(f"List of sessions without a T1w scan:\n {readable_path_list}\n")
     print(f"Please find the mapping file in JSON format and other helpful logs at {str(output)}\n")
 
 

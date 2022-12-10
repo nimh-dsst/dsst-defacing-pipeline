@@ -6,3 +6,4 @@ as_qc_failures.csv
 scripts_outputs/
 .idea/
 examples/visualqc_prep/
+examples/sub-01/
