@@ -12,6 +12,14 @@ The defacing pipeline for datasets curated by the [Data Science and Sharing Team
 4. Fix defacings that failed visual inspection.
 
 ## Example
+
+### **Step 0:** Get data and code
+Clone this repository to a preferred location on your machine.
+
+```bash
+git clone git@github.com:nih-fmrif/dsst-defacing-pipeline.git
+```
+
 We'll be running the scripts on the [MyConnectome](https://openneuro.org/datasets/ds000031/versions/1.0.0) dataset. The dataset is available for download on OpenNeuro as [ds000031](https://openneuro.org/datasets/ds000031/versions/1.0.0/download). 
 
 ```bash
@@ -49,11 +57,9 @@ BIDS tree snippet post-download:
 └── task-spatialwm_events.json
 ```
 
-### **Step 0:** Clone this repository.
 
-```bash
-git clone git@github.com:nih-fmrif/dsst-defacing-pipeline.git
-```
+
+
 
 ### **Step 1:** Generate mapping file.
 
