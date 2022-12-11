@@ -92,7 +92,7 @@ for i in `ls -d ../datasets/toy/*`; do SUBJ=$(echo $i | sed 's|../datasets/toy/|
 swarm -f ./examples/defacing_parallel.swarm --module afni,fsl --merge-output --logdir ./examples/swarm_log
 ```
 
-### ** Step 3:** Visually QC defaced scans.
+### **Step 3:** Visually QC defaced scans.
 
 
 
