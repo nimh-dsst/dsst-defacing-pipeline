@@ -2,7 +2,7 @@
 
 The defacing pipeline for datasets curated by the [Data Science and Sharing Team (DSST)](https://cmn.nimh.nih.gov/dsst) are completed in four steps. Each of these steps is explained in more detail with an example in the next section. The pipeline requires a BIDS dataset as input.
 
-1. Generate and finalize ["primary" scans](#glossary) to ["other scans'"](#glossary) mapping file. 
+1. Generate and finalize ["primary" scans](#glossary) to [other scans'](#glossary) mapping file. 
 2. Deface primary scans
    with [@afni_refacer_run](https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/tutorials/refacer/refacer_run.html) program
    developed by the AFNI Team. To deface remaining scans in the session, register them to the primary scan and use
