@@ -49,6 +49,12 @@ BIDS tree snippet post-download:
 └── task-spatialwm_events.json
 ```
 
+### **Step 0:** Clone this repository.
+
+```bash
+git clone git@github.com:nih-fmrif/dsst-defacing-pipeline.git
+```
+
 ### **Step 1:** Generate mapping file.
 
 a. Generate a mapping file using the `generate_mappings.py` script. 
