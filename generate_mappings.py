@@ -192,11 +192,6 @@ def update_mapping_dict(mapping_dict, anat_dir, is_sessions, sidecars, t1_unavai
 
 def summary_to_stdout(vqc_t1_cmd, sess_ct, t1s_found, t1s_not_found, no_anat_dirs, output):
     readable_path_list = ['/'.join([path.parent.name, path.name]) for path in t1s_not_found]
-    print(f"==================================")
-    print(f"VisualQC's visualqc_t1_mri command")
-    print(f"==================================")
-    print(f"Run the following command to QC primary scans:\n {vqc_t1_cmd}\n")
-
     print(f"====================")
     print(f"Dataset Summary")
     print(f"====================")

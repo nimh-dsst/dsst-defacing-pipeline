@@ -1,6 +1,6 @@
 # DSST Defacing Pipeline
 
-The defacing workflow for datasets curated by the Data Science and Sharing Team (DSST) will be completed in three steps. Each of these steps are explained in more detail later in the document.
+The defacing pipeline for datasets curated by the [Data Science and Sharing Team (DSST)](https://cmn.nimh.nih.gov/dsst) are completed in four steps. Each of these steps is explained in more detail with an example.
 
 1. Generate and finalize ["primary" scans](#glossary) to ["other scans'"](#glossary) mapping file. 
 2. Deface primary scans
@@ -8,7 +8,7 @@ The defacing workflow for datasets curated by the Data Science and Sharing Team 
    developed by the AFNI Team. To deface remaining scans in the session, register them to the primary scan and use
    it's defacemask to generate a defaced image.
 3. Visually inspect defaced scans with your preferred QC tool. 
-4. Fix defacings that failed QC.
+4. Fix defacings that failed visual inspection.
 
 ## Workflow
 
@@ -52,12 +52,6 @@ Example:
 
 ```
 $ python generate_mappings.py -i ../datasets/ds000031 -o ./examples                                                                              
-==================================
-VisualQC's visualqc_t1_mri command
-==================================
-Run the following command to QC primary scans:
- visualqc_t1_mri -u /Users/arshithab/dsst-defacing-pipeline/examples/visualqc_prep/t1_mri -i /Users/arshithab/dsst-defacing-pipeline/examples/visualqc_prep/id_list_t1.txt -m primary.nii.gz
-
 ====================
 Dataset Summary
 ====================
@@ -132,17 +126,11 @@ Evaluate registration accuracy of ["other"](#terminology) scans within the sessi
    BN, Milev R, Müller DJ, Kennedy SH, Scott CJM, Strother SC, and Arnott SR (2021)
    [Multisite Comparison of MRI Defacing Software Across Multiple Cohorts](10.3389/fpsyt.2021.617997). Front. Psychiatry
    12:617997. doi:10.3389/fpsyt.2021.617997
-2. The workflow is developed around
-   the [AFNI Refacer program](https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/tutorials/refacer/refacer_run.html).
-3. FSL's [`flirt`](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FLIRT)
+2. `@afni_refacer_run` is the defacing tool used under the hood. [AFNI Refacer program](https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/tutorials/refacer/refacer_run.html).
+3. FSL's [FLIRT](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FLIRT)
    and [`fslmaths`](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils?highlight=%28fslmaths%29) programs have been used
    for registration and masking steps in the workflow.
-4. [VisualQC's T1 MRI](https://raamana.github.io/visualqc/gallery_t1_mri.html) utility.
-5. [VisualQC's defacing accuracy checker](https://raamana.github.io/visualqc/gallery_defacing.html) utility.
-6. [VisualQC's alignment quality checker](https://raamana.github.io/visualqc/gallery_registration_unimodal.html)
-   utility.
-7. [Skullstripping](https://andysbrainbook.readthedocs.io/en/latest/fMRI_Short_Course/Preprocessing/Skull_Stripping.html)
-8. [Relevant thread about 3dSkullStrip on AFNI message board](https://afni.nimh.nih.gov/afni/community/board/read.php?1,159053,159053#msg-159053)
+4. [VisualQC](https://raamana.github.io/visualqc/) utility.
 
 ## Acknowledgements
 
