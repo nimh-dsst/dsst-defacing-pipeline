@@ -35,6 +35,7 @@ datalad get sub-01/ses-*/anat
 BIDS tree snippet post-download:
 
 ```bash
+$ tree ../datasets/ds000031/
 ../datasets/ds000031/
 ├── CHANGES
 ├── README
