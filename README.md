@@ -1,54 +1,58 @@
 # DSST Defacing Pipeline
 
-The defacing pipeline for datasets curated by the [Data Science and Sharing Team (DSST)](https://cmn.nimh.nih.gov/dsst) are completed in four steps. Each of these steps is explained in more detail with an example.
+The defacing pipeline for datasets curated by the [Data Science and Sharing Team (DSST)](https://cmn.nimh.nih.gov/dsst) are completed in four steps. Each of these steps is explained in more detail with an example in the next section. The pipeline requires a BIDS dataset as input.
 
 1. Generate and finalize ["primary" scans](#glossary) to ["other scans'"](#glossary) mapping file. 
 2. Deface primary scans
    with [@afni_refacer_run](https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/tutorials/refacer/refacer_run.html) program
    developed by the AFNI Team. To deface remaining scans in the session, register them to the primary scan and use
    it's defacemask to generate a defaced image.
+    **NOTE**: If a session doesn't have a T1w scan, then `@afni_refacer_run` is run on all every scan individually. 
 3. Visually inspect defaced scans with your preferred QC tool. 
 4. Fix defacings that failed visual inspection.
 
-## Workflow
-
-**NOTE:** It's assumed throughout this document that the input dataset to defacing algorithm is in BIDS valid format.
-Here's an example of a BIDS tree:
+## Example
+We'll be running the scripts on the [MyConnectome](https://openneuro.org/datasets/ds000031/versions/1.0.0) dataset. The dataset is available for download on OpenNeuro as [ds000031](https://openneuro.org/datasets/ds000031/versions/1.0.0/download). 
 
 ```bash
-input_bids_dataset
-├── dataset_description.json
-├── README
-├── sub-ON02747
-│   └── ses-01
-│       ├── anat
-│       │   ├── sub-ON02747_ses-01_acq-MPRAGE_T1w.json
-│       │   ├── sub-ON02747_ses-01_acq-MPRAGE_T1w.nii.gz
-│       │   ├── sub-ON02747_ses-01_rec-SCIC_T2starw.json
-│       │   └── sub-ON02747_ses-01_rec-SCIC_T2starw.nii.gz
-│       ├── func
-│       │   ├── sub-ON02747_ses-01_task-rest_dir-forward_bold.json
-│       │   ├── sub-ON02747_ses-01_task-rest_dir-forward_bold.nii.gz
-│       │   ├── sub-ON02747_ses-01_task-rest_dir-reverse_bold.json
-│       │   └── sub-ON02747_ses-01_task-rest_dir-reverse_bold.nii.gz
-│       └── perf
-│           ├── sub-ON02747_ses-01_asl.json
-│           └── sub-ON02747_ses-01_asl.nii.gz
-│── sub-ON02811
-└── sub-ON99871
+datalad install https://github.com/OpenNeuroDatasets/ds000031.git
 ```
 
-### **1:** Generate and finalize "primary" scans to "other" scans mapping file.
+Download data in `anat` directories of the dataset.
 
-Generate a mapping file using the `generate_mappings.py` script. Edit the generated mapping file, if necessary. Use the
-flowchart below as blueprint while making decisions about or changes to the mapping file. The time and effort required
-to complete this step is dependent on the dataset. 
+```bash
+datalad get sub-01/ses-*/anat
+```
 
-Here's a flow chart of what this process might look like.
+BIDS tree snippet post-download:
 
-![Generate and finalize "primary" scans to "other" scans mapping file.](images/dsst_defacing_wf_fig.png)
+```bash
+../datasets/ds000031/
+├── CHANGES
+├── README
+├── dataset_description.json
+├── events.json
+├── participants.json
+├── participants.tsv
+├── sub-01
+│   ├── ses-001
+│   │   ├── anat
+│   │   │   ├── sub-01_ses-001_T1w.json
+│   │   │   └── sub-01_ses-001_T1w.nii.gz 
+│   │   ├── sub-01_ses-001_scans.json
+│   │   └── sub-01_ses-001_scans.tsv
+│   ├── ses-003
+│   │   ├── anat
+│   │   ├── sub-01_ses-003_scans.json
+│   │   └── sub-01_ses-003_scans.tsv
+...
+└── task-spatialwm_events.json
+```
 
-Example:
+### **Step 1:** Generate mapping file.
+
+a. Generate a mapping file using the `generate_mappings.py` script. 
+b. Look at your mapping file. Make sure it's not empty. Edit it, if there are any special cases you'd like to account for.
 
 ```
 $ python generate_mappings.py -i ../datasets/ds000031 -o ./examples                                                                              
@@ -64,48 +68,26 @@ List of sessions without a T1w scan:
 Please find the mapping file in JSON format and other helpful logs at /Users/arshithab/dsst-defacing-pipeline/examples
 ```
 
-For sessions with T1w images, the user can quality check using the visualqc command output by the script. See above for
-an example.
+### **Step 2:** Deface scans
+Run `dsst_defacing_wf.py` script that calls on `deface.py` and `register.py` to deface scans in the dataset. 
 
-### **2:** Actually deface scans.
-
-At this point, a big chunk of the job is done. Run `dsst_defacing_wf.py` script that calls on `deface.py` and `register.py` to
-deface scans in the dataset.
-
-Example:
+#### Option 1: Serially
+If you have a small dataset with less than 10 subjects, then it might be easiest to run the defacing algorithm serially.
 
 ```bash
 python dsst_defacing_wf.py -i ../datasets/ds000031 -m examples/primary_to_others_mapping.json -o examples
 ```
 
-### **3:** Visually QC defaced scans.
-
-To use VisualQC, the command line utilities will need to be installed. Please refer
-to [VisualQC's documentation](https://raamana.github.io/visualqc/installation.html) for
-installation instructions.
-
-#### Primary Scans
-
-The following criteria was used to judge the success of defacing:
-
-* No brain tissue had been removed during defacing
-* The 3D render didn’t contain more than one partial feature (eyes, nose or mouth)
-
-Example:
+#### Option 2: Parallely
+If you have dataset with over 10 subjects, then it might be more practical to run it in parallel. Here's the command one would use to run it on NIH HPC:
 
 ```bash
-vqcdeface -u /data/NIMH_scratch/defacing_comparisons/autism_subtypes/defacing_outputs \
--m tmp.00.INPUT_iso_1mm.nii.gz -d tmp.99.result.deface_iso_1mm.nii.gz \
--r tmp.99.result.deface_iso_1mm_render \
--o visualqc -i as_visualqc_arsh.txt
+for i in `ls -d ../datasets/toy/*`; do SUBJ=$(echo $i | sed 's|../datasets/toy/||g' ); echo "python dsst_defacing_wf.py -i ../datasets/ds000031 -m examples/primary_to_others_mapping.json -o examples -s $SUBJ"; done > ./examples/defacing_parallel.swarm
+swarm -f ./examples/defacing_parallel.swarm --module afni,fsl --merge-output --logdir ./examples/swarm_log
 ```
 
-#### "Other"/Secondary Scans
+### ** Step 3:** Visually QC defaced scans.
 
-Evaluate registration accuracy of ["other"](#terminology) scans within the session to the chosen primary scan.
-
-```bash
-```
 
 
 ## Glossary
@@ -115,10 +97,7 @@ Evaluate registration accuracy of ["other"](#terminology) scans within the sessi
 - **Other/Secondary Scans:** All scans *except* the primary scan are grouped together and referred to as "other" or "
   secondary" scans for a given session.
 - **[VisualQC](https://raamana.github.io/visualqc):** A suite of QC tools developed by Pradeep Raamana (Assistant
-  Professor at University of Pittsburgh). While a noun, it's sometimes also used as a verb to refer to "QC-ing scans
-  visually". Within the team, a sentence like "We'll be Visual QC-ing primary scans." means that we'll be eyeball-ing
-  the primary scans using VisualQC.
-
+  Professor at University of Pittsburgh).
 
 ## References
 
