@@ -13,6 +13,8 @@ The defacing pipeline for datasets curated by the [Data Science and Sharing Team
 3. Visually inspect defaced scans with your preferred QC tool. 
 4. Fix defacings that failed visual inspection.
 
+![Generate and finalize "primary" scans to "secondary" scans mapping file.](images/generate_mappings.png)
+
 ## Example
 
 ### **Step 0:** Get data and code
