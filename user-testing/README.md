@@ -15,7 +15,7 @@ To make a hands-on user-testing session less frustrating, NIH folks with biowulf
 ```bash
 cd /data/NIMH_scratch/defacing-pipeline-testing
 mkdir arshithab # replace your NIH username
-cp -r sample_data arshithab
+cp -r sample_dataset arshithab
 cd arshithab
 ```
 2. Load tmux module and start a tmux session 
