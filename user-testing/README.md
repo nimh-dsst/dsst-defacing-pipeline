@@ -18,16 +18,26 @@ mkdir arshithab # replace your NIH username
 cp -r sample_data arshithab
 cd arshithab
 ```
-2. Load python module and create an output directory 
+2. Load tmux module and start a tmux session 
 ```bash
-module load python # defaults to python v3.8
-mkdir output
+module load tmux 
+tmux
+```
+3. Request an sinteractive session within tmux session
+```bash
+sinteractive
+```
+4. Once you're in an interactive session, load the python module (if you don't already have virtual environment setup)
+```bash
+module load python # defaults to version 3.8
 ```
 3. Now to the exciting stuff! Let's generate a mapping file: 
+
 ```bash
+mkdir output
 python ../dsst-defacing-pipeline/generate_mappings.py -i sample_dataset/ -o output/
 ```
-4. Time to run the defacing algorithm that uses [@afni_refacer_run](https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/tutorials/refacer/refacer_run.html) program under the hood. This algorithm can be run serially or parallel-y 
+4. Time to run the defacing algorithm that uses [@afni_refacer_run](https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/tutorials/refacer/refacer_run.html) program under the hood. 
 
 ```bash
 python ../dsst-defacing-pipeline/dsst_defacing_wf.py -i sample_dataset/ -m output/primary_to_others_mapping.json -o output
