@@ -82,7 +82,7 @@ def run_afni_refacer(primary_t1, others, subj_input_dir, output_dir):
             f"{full_cmd}\n"
             f"==========================================================================================\n")
         logfile_obj.flush()  # clear file object buffer
-        print(f"Starting a child process to run afni_refacer on {primary_t1.name}.")
+        print(f"Starting a child process to run afni_refacer on {primary_t1.name}")
         run(full_cmd, logfile_obj)
         print(f"Child process to run afni_refacer on {primary_t1.name} completed.\n")
 

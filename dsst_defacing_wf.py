@@ -63,7 +63,7 @@ def main():
         if missing_refacer_out is not None:
             afni_refacer_failures.extend(missing_refacer_out)
 
-    with open(output.joinpath('missing_afni_refacer_output.txt'), 'w') as f:
+    with open(output.joinpath('logs', 'missing_afni_refacer_output.txt'), 'w') as f:
         for line in afni_refacer_failures:
             f.write(str(line))
 

@@ -95,7 +95,7 @@ If you have a small dataset with less than 10 subjects, then it might be easiest
 python dsst_defacing_wf.py -i ../datasets/ds000031 -m examples/primary_to_others_mapping.json -o examples
 ```
 
-#### Option 2: Parallely
+#### Option 2: Parallelly
 If you have dataset with over 10 subjects, then it might be more practical to run it in parallel. Here's the command one would use to run it on NIH HPC:
 
 ```bash
@@ -105,7 +105,7 @@ swarm -f ./examples/defacing_parallel.swarm --module afni,fsl --merge-output --l
 
 ### **Step 3:** Visually QC defaced scans.
 
-
+Visual QC defacing accuracy gallery https://raamana.github.io/visualqc/gallery_defacing.html
 
 ## Glossary
 

@@ -70,7 +70,7 @@ def primary_scans_qc_prep(mapping_dict, outdir):
         # remove empty strings from primaries list
         primaries = [p for p in primaries if p != '']
 
-    vqc_inputs = outdir.joinpath('visualqc_prep/t1_mri')
+    vqc_inputs = outdir.joinpath('logs', 'visualqc_prep/t1_mri')
     if not vqc_inputs.exists:
         vqc_inputs.mkdir(parents=True)
 
@@ -91,7 +91,7 @@ def primary_scans_qc_prep(mapping_dict, outdir):
         ln_cmd = f"ln -s {primary} {dest.joinpath('primary.nii.gz')}"
         run(ln_cmd, "")
 
-    with open(outdir.joinpath('visualqc_prep/id_list_t1.txt'), 'w') as f:
+    with open(outdir.joinpath('logs', 'visualqc_prep/id_list_t1.txt'), 'w') as f:
         for i in id_list:
             f.write(str(i) + '\n')
 
@@ -205,6 +205,9 @@ def summary_to_stdout(vqc_t1_cmd, sess_ct, t1s_found, t1s_not_found, no_anat_dir
 def main():
     input, output = get_args()
 
+    # make a script logs dir
+    output.joinpath('logs').mkdir(parents=True, exist_ok=True)
+
     # input_layout = bids.BIDSLayout(input) # taking insane amounts of time so not using pybids
     t1s_not_found = []
     t1s_found = []
@@ -225,16 +228,16 @@ def main():
         json.dump(mapping_dict, f1, indent=4)
 
     # write session paths without T1w scan to file
-    with open(output.joinpath('t1_unavailable.txt'), 'w') as f2:
+    with open(output.joinpath('logs', 't1_unavailable.txt'), 'w') as f2:
         for sess_path in t1s_not_found:
             f2.write(str(sess_path) + '\n')
 
     # write vqc command to file
     vqc_t1_mri_cmd = primary_scans_qc_prep(mapping_dict, output)
-    with open(output.joinpath('visualqc_t1_mri_cmd'), 'w') as f3:
+    with open(output.joinpath('logs', 'visualqc_t1_mri_cmd'), 'w') as f3:
         f3.write(f"{vqc_t1_mri_cmd}\n")
 
-    with open(output.joinpath('anat_unavailable.txt'), 'w') as f4:
+    with open(output.joinpath('logs', 'anat_unavailable.txt'), 'w') as f4:
         for p in no_anat_dirs:
             f4.write(str(p) + '\n')
 
