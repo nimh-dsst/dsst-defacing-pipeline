@@ -7,3 +7,4 @@ scripts_outputs/
 .idea/
 examples/visualqc_prep/
 examples/sub-01/
+user-testing/sample_dataset/*
