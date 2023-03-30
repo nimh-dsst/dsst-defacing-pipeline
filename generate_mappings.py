@@ -199,7 +199,8 @@ def summary_to_stdout(vqc_t1_cmd, sess_ct, t1s_found, t1s_not_found, no_anat_dir
     print(f"Sessions with 'anat' directory with at least one T1w scan: {len(t1s_found)}")
     print(f"Sessions without a T1w scan: {len(t1s_not_found)}")
     print(f"List of sessions without a T1w scan:\n {readable_path_list}\n")
-    print(f"Please find the mapping file in JSON format and other helpful logs at {str(output)}\n")
+    print(
+        f"Please find the mapping file in JSON format at {str(output)} and other helpful logs at {str(output.joinpath('logs'))}\n")
 
 
 def main():
