@@ -60,7 +60,7 @@ def primary_scans_qc_prep(mapping_dict, outdir):
     for subjid in mapping_dict.keys():
 
         # check existence of sessions to query mapping dict
-        if mapping_dict[subjid].keys() != interested_keys:
+        if list(mapping_dict[subjid].keys()) != interested_keys:
             for sessid in mapping_dict[subjid].keys():
                 primary = mapping_dict[subjid][sessid]['primary_t1']
                 primaries.append(primary)
@@ -80,7 +80,8 @@ def primary_scans_qc_prep(mapping_dict, outdir):
         subjid = entities[0]
 
         # check existence of session to construct destination path
-        sessid = [e for e in entities if e.startswith('ses')][0]
+        sessid = [e if e.startswith('ses') else "" for e in entities][0]
+
         if sessid:
             dest = vqc_inputs.joinpath(subjid, sessid, 'anat')
         else:
@@ -197,10 +198,11 @@ def summary_to_stdout(vqc_t1_cmd, sess_ct, t1s_found, t1s_not_found, no_anat_dir
     print(f"====================")
     print(f"Total number of sessions with 'anat' directory in the dataset: {sess_ct}")
     print(f"Sessions with 'anat' directory with at least one T1w scan: {len(t1s_found)}")
-    print(f"Sessions without a T1w scan: {len(t1s_not_found)}")
-    print(f"List of sessions without a T1w scan:\n {readable_path_list}\n")
+    if len(t1s_not_found) != 0:  # don't print the following if it's not helpful to the user
+        print(f"Sessions without a T1w scan: {len(t1s_not_found)}")
+        print(f"List of sessions without a T1w scan:\n {readable_path_list}")
     print(
-        f"Please find the mapping file in JSON format at {str(output)} and other helpful logs at {str(output.joinpath('logs'))}\n")
+        f"\nPlease find the mapping file in JSON format at {str(output.joinpath('primary_to_others_mapping.json'))} \nand other helpful logs at {str(output.joinpath('logs'))}\n")
 
 
 def main():
