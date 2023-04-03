@@ -29,24 +29,6 @@ def preprocess_facemask(fmask_path, logfile_obj):
         raise
 
 
-# def separate_out_srcdata_primary_scans(primary_scan, afni_workdir, mapping_dict):
-#     afni_workdir_suffix = afni_workdir.name.split('workdir_')[1]
-#     if "sourcedata" in primary_scan.parts:
-#         # converting Path to str coz Path type is not JSON serializable
-#         if primary_scan.name.split('.')[0] == afni_workdir_suffix:
-#             mapping_dict['sourcedata'][str(afni_workdir)].append(
-#                 str(primary_scan.parent.joinpath('tmp.99.result.deface.nii')))
-#         else:
-#             mapping_dict[['sourcedata']][str(afni_workdir)].append(str(primary_scan))
-#     else:
-#         if primary_scan.name.split('.')[0] == afni_workdir_suffix:
-#             mapping_dict['main'][str(afni_workdir)].append(
-#                 str(primary_scan.parent.joinpath('tmp.99.result.deface.nii')))
-#         else:
-#             mapping_dict['main'][str(afni_workdir)].append(str(primary_scan))
-#     return mapping_dict
-
-
 def get_intermediate_filenames(outdir, prefix):
     mat = f"{outdir.joinpath(prefix)}_reg.mat"
     reg_out = f"{outdir.joinpath('registered.nii.gz')}"
@@ -55,16 +37,16 @@ def get_intermediate_filenames(outdir, prefix):
     return mat, reg_out, mask, defaced_out
 
 
-def register_to_primary_scan(subj_dir, afni_workdir, primary_scan, other_scans_list, logfile_obj):
-    logfile_obj.flush()
+def register_to_primary_scan(subj_dir, afni_workdir, primary_scan, other_scans_list, log_fileobj):
+    log_fileobj.flush()
     modality = "anat"
 
     # preprocess facemask
     raw_facemask_volumes = afni_workdir.joinpath('tmp.05.sh_t2a_thr.nii')
-    t1_mask = preprocess_facemask(raw_facemask_volumes, logfile_obj)
+    t1_mask = preprocess_facemask(raw_facemask_volumes, log_fileobj)
 
     for other in other_scans_list:
-        logfile_obj.flush()
+        log_fileobj.flush()
         entities = other.split('_')
 
         # changing other scan name to other scan full path
@@ -83,4 +65,4 @@ def register_to_primary_scan(subj_dir, afni_workdir, primary_scan, other_scans_l
 
         mask_cmd = f"fslmaths {other} -mas {other_mask} {other_defaced}"
         full_cmd = " ; ".join(["module load fsl", mkdir_cmd, flirt_cmd, applyxfm_cmd, mask_cmd]) + '\n'
-        run(full_cmd, logfile_obj)
+        run(full_cmd, log_fileobj)

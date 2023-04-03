@@ -109,8 +109,8 @@ def sort_by_acq_time(sidecars):
     """
     acq_time_dict = dict()
     for sidecar in sidecars:
-        sidecar_fobj = open(sidecar, 'r')
-        data = json.load(sidecar_fobj)
+        with open(sidecar, 'r') as f:
+            data = json.load(f)
         acq_time_dict[sidecar] = data["AcquisitionTime"]
 
     acq_time_sorted_list = sorted(acq_time_dict.items(), key=lambda key_val_tup: key_val_tup[1], reverse=True)
@@ -197,7 +197,7 @@ def summary_to_stdout(vqc_t1_cmd, sess_ct, t1s_found, t1s_not_found, no_anat_dir
     print(f"Dataset Summary")
     print(f"====================")
     print(f"Total number of sessions with 'anat' directory in the dataset: {sess_ct}")
-    print(f"Sessions with 'anat' directory with at least one T1w scan: {len(t1s_found)}")
+    print(f"Sessions with 'anat' directory with at least one T1w scan: {len(t1s_found)}\n")
     if len(t1s_not_found) != 0:  # don't print the following if it's not helpful to the user
         print(f"Sessions without a T1w scan: {len(t1s_not_found)}")
         print(f"List of sessions without a T1w scan:\n {readable_path_list}")
