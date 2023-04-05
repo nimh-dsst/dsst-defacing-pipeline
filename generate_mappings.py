@@ -32,7 +32,7 @@ def get_args():
     return args.inputdir.resolve(), args.outdir.resolve()
 
 
-def run(cmdstr, logfile):
+def run_command(cmdstr, logfile):
     """Runs the given command str as shell subprocess. If logfile object is provided, then the stdout and stderr of the
     subprocess is written to the log file.
 
@@ -90,7 +90,7 @@ def primary_scans_qc_prep(mapping_dict, outdir):
 
         id_list.append(dest)
         ln_cmd = f"ln -s {primary} {dest.joinpath('primary.nii.gz')}"
-        run(ln_cmd, "")
+        run_command(ln_cmd, "")
 
     with open(outdir.joinpath('logs', 'visualqc_prep/id_list_t1.txt'), 'w') as f:
         for i in id_list:

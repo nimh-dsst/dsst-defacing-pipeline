@@ -1,7 +1,7 @@
 import subprocess
 
 
-def run(cmdstr, logfile):
+def run_command(cmdstr, logfile):
     subprocess.run(cmdstr, stdout=logfile, stderr=subprocess.STDOUT, encoding='utf8', shell=True)
 
 
@@ -18,7 +18,7 @@ def preprocess_facemask(fmask_path, logfile_obj):
     # arithmetic on the result from above
     c2 = f"fslmaths {prefix}.nii.gz -abs -binv {defacemask}"
     print(f"Splitting the facemask volume at {fmask_path} and binarizing the resulting volume... \n ")
-    run('; '.join([c0, c1, c2]), logfile_obj)
+    run_command('; '.join([c0, c1, c2]), logfile_obj)
     try:
         if defacemask.exists():
             return defacemask
@@ -65,4 +65,4 @@ def register_to_primary_scan(subj_dir, afni_workdir, primary_scan, other_scans_l
 
         mask_cmd = f"fslmaths {other} -mas {other_mask} {other_defaced}"
         full_cmd = " ; ".join(["module load fsl", mkdir_cmd, flirt_cmd, applyxfm_cmd, mask_cmd]) + '\n'
-        run(full_cmd, log_fileobj)
+        run_command(full_cmd, log_fileobj)

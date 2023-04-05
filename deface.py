@@ -1,4 +1,3 @@
-import shutil
 import subprocess
 from os import fspath
 from pathlib import Path
@@ -6,7 +5,7 @@ from pathlib import Path
 import register
 
 
-def run(cmdstr, logfile):
+def run_command(cmdstr, logfile):
     if not logfile:
         logfile = subprocess.PIPE
     subprocess.run(cmdstr, stdout=logfile, stderr=subprocess.STDOUT, encoding='utf8', shell=True)
@@ -16,13 +15,9 @@ def rename_afni_workdir(workdir_path):
     default_prefix = workdir_path.name.split('.')[1]
     required_file_prefixes = ('__work', 'logs')
     to_be_deleted_files = [
-        f for f in list(workdir_path.parent.glob('*')) if
-        not (
-                f.name.startswith(required_file_prefixes) and f.name.endswith('QC')
-        )
-    ]
-    for f in to_be_deleted_files:
-        shutil.rmtree(f)
+        str(f) for f in list(workdir_path.parent.glob('*'))
+        if not (f.name.startswith(required_file_prefixes) or f.name.endswith('QC'))]
+    run_command(f"rm -rf {' '.join(to_be_deleted_files)}", '')
 
     new_workdir_path = workdir_path.parent / f'workdir_{default_prefix}'
     workdir_path.rename(new_workdir_path)
@@ -56,42 +51,45 @@ def get_anat_dir_paths(subj_dir_path):
     return anat_dirs
 
 
-def run_afni_refacer(primary_t1, others, subj_input_dir, output_dir):
+def run_afni_refacer(primary_t1, others, subj_input_dir, sess_dir, output_dir):
     # constructing afni refacer command
     if primary_t1:
+        subj_id = subj_input_dir.name
+        sess_id = sess_dir.name if sess_dir else ""
+
         primary_t1 = Path(primary_t1)
-        entities = primary_t1.name.split('_')
 
         # setting up directory structure
+        entities = primary_t1.name.split('_')
         acq = [i.split('-')[1] for i in entities if i.startswith('acq-')]
-        if acq:
-            subj_outdir = output_dir / entities[0] / entities[1] / 'anat' / acq[0]
+
+        if acq:  # TODO test on hv_protocol dataset to confirm. Is this directory even necessary with the new pipeline?
+            subj_outdir = output_dir / subj_id / sess_id / 'anat' / acq[0]
         else:
-            subj_outdir = output_dir / entities[0] / entities[1] / 'anat'
+            subj_outdir = output_dir / subj_id / sess_id / 'anat'
+        print(subj_outdir)
 
         prefix = primary_t1.name.split('.')[0]  # filename without the extension
 
-        mkdir_cmds = f"mkdir -p {subj_outdir}"  # make output directories within subject directory
-
+        # mkdir_cmds = f"mkdir -p {subj_outdir}"  # make output directories within subject directory
+        subj_outdir.mkdir(parents=True, exist_ok=True)
         # afni refacer commands
         refacer_cmd = f"@afni_refacer_run -input {primary_t1} -mode_deface -no_clean -prefix {fspath(subj_outdir / prefix)}"
 
         # TODO remove module load afni
-        full_cmd = f"module load afni ; {mkdir_cmds} ; {refacer_cmd}"
+        full_cmd = f"module load afni ; {refacer_cmd}"
         print(full_cmd)
 
         # TODO make log text less ugly; perhaps in a separate function
-        log_filename = subj_outdir / 'logs' / f"{primary_t1.name.split('.')[0]}_log_deface.txt"
-        if not log_filename.parent.exists():
-            log_filename.parent.mkdir(parents=True)
-        log_fileobj = open(subj_outdir / 'logs' / log_filename, 'w')
+        log_filename = subj_outdir / 'defacing_pipeline.log'
+        log_fileobj = open(log_filename, 'w')
         log_fileobj.write(
             f"================================ afni_refacer_run command ================================\n"
             f"{full_cmd}\n"
             f"==========================================================================================\n")
         log_fileobj.flush()  # clear file object buffer
         print(f"Running @afni_refacer_run on {primary_t1.name}\nFind command logs at {log_filename}")
-        run(full_cmd, log_fileobj)
+        run_command(full_cmd, log_fileobj)
         print(f"@afni_refacer_run command completed on {primary_t1.name}\n")
 
         # rename afni workdirs
@@ -119,11 +117,11 @@ def deface_primary_scan(subj_input_dir, sess_dir, mapping_dict, output_dir):
     if sess_dir:
         primary_t1 = mapping_dict[subj_id][sess_id]['primary_t1']
         others = [str(s) for s in mapping_dict[subj_id][sess_id]['others'] if s != primary_t1]
-        missing_refacer_outputs.append(run_afni_refacer(primary_t1, others, subj_input_dir, output_dir))
+        missing_refacer_outputs.append(run_afni_refacer(primary_t1, others, subj_input_dir, sess_dir, output_dir))
     else:
         primary_t1 = mapping_dict[subj_id]['primary_t1']
         others = [str(s) for s in mapping_dict[subj_id]['others'] if s != primary_t1]
-        missing_refacer_outputs.append(run_afni_refacer(primary_t1, others, subj_input_dir, output_dir))
+        missing_refacer_outputs.append(run_afni_refacer(primary_t1, others, subj_input_dir, "", output_dir))
 
     return missing_refacer_outputs
 
