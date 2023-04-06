@@ -15,6 +15,7 @@
 
 import argparse
 import json
+import random
 import subprocess
 from collections import defaultdict
 from pathlib import Path
@@ -108,12 +109,24 @@ def sort_by_acq_time(sidecars):
     :return list acq_time_sorted_list: A list of JSON sidecar file paths sorted by acquisition time in descending order.
     """
     acq_time_dict = dict()
-    for sidecar in sidecars:
-        with open(sidecar, 'r') as f:
-            data = json.load(f)
-        acq_time_dict[sidecar] = data["AcquisitionTime"]
+    acq_time_field_vars = ["AcquisitionTime", "AcquisitionDateTime"]
+    try:
+        for sidecar in sidecars:
+            with open(sidecar, 'r') as f:
+                data = json.load(f)
 
-    acq_time_sorted_list = sorted(acq_time_dict.items(), key=lambda key_val_tup: key_val_tup[1], reverse=True)
+                for field in acq_time_field_vars:
+                    acq_time_dict[sidecar] = data[field]
+        acq_time_sorted_list = sorted(acq_time_dict.items(), key=lambda key_val_tup: key_val_tup[1], reverse=True)
+
+    except:
+        newline_sidecars = '\n'.join(sidecars)  # need this since f-string expression part cannot include a backslash
+        print(
+            f"'AcquisitionTime' or 'AcquisitionDateTime' field was not found in the following sidecar files:\n"
+            f"{newline_sidecars}. Picking a primary scan arbitrarily.")
+        random.shuffle(sidecars)  # shuffles the list in place
+        acq_time_sorted_list = sidecars
+
     return acq_time_sorted_list
 
 
@@ -209,7 +222,7 @@ def main():
     input, output = get_args()
 
     # make a script logs dir
-    output.joinpath('logs').mkdir(parents=True, exist_ok=True)
+    output.joinpath('defacing_pipeline_logs').mkdir(parents=True, exist_ok=True)
 
     # input_layout = bids.BIDSLayout(input) # taking insane amounts of time so not using pybids
     t1s_not_found = []
@@ -231,16 +244,16 @@ def main():
         json.dump(mapping_dict, f1, indent=4)
 
     # write session paths without T1w scan to file
-    with open(output.joinpath('logs', 't1_unavailable.txt'), 'w') as f2:
+    with open(output.joinpath('defacing_pipeline_logs', 't1_unavailable.txt'), 'w') as f2:
         for sess_path in t1s_not_found:
             f2.write(str(sess_path) + '\n')
 
     # write vqc command to file
     vqc_t1_mri_cmd = primary_scans_qc_prep(mapping_dict, output)
-    with open(output.joinpath('logs', 'visualqc_t1_mri_cmd'), 'w') as f3:
+    with open(output.joinpath('defacing_pipeline_logs', 'visualqc_t1_mri_cmd'), 'w') as f3:
         f3.write(f"{vqc_t1_mri_cmd}\n")
 
-    with open(output.joinpath('logs', 'anat_unavailable.txt'), 'w') as f4:
+    with open(output.joinpath('defacing_pipeline_logs', 'anat_unavailable.txt'), 'w') as f4:
         for p in no_anat_dirs:
             f4.write(str(p) + '\n')
 
