@@ -13,7 +13,7 @@ The defacing pipeline for datasets curated by the [Data Science and Sharing Team
 3. Visually inspect defaced scans with your preferred QC tool. 
 4. Fix defacings that failed visual inspection.
 
-![Generate and finalize "primary" scans to "secondary" scans mapping file.](images/generate_mappings.png)
+![Generate and finalize "primary" scans to "secondary" scans mapping file.](images/pipeline_screen_quality.png)
 
 ## Example
 
@@ -36,63 +36,14 @@ Download data in `anat` directories of the dataset.
 datalad get sub-01/ses-*/anat
 ```
 
-BIDS tree snippet post-download:
-
-```bash
-$ tree ../datasets/ds000031/
-../datasets/ds000031/
-├── CHANGES
-├── README
-├── dataset_description.json
-├── events.json
-├── participants.json
-├── participants.tsv
-├── sub-01
-│   ├── ses-001
-│   │   ├── anat
-│   │   │   ├── sub-01_ses-001_T1w.json
-│   │   │   └── sub-01_ses-001_T1w.nii.gz 
-│   │   ├── sub-01_ses-001_scans.json
-│   │   └── sub-01_ses-001_scans.tsv
-│   ├── ses-003
-│   │   ├── anat
-│   │   ├── sub-01_ses-003_scans.json
-│   │   └── sub-01_ses-003_scans.tsv
-...
-└── task-spatialwm_events.json
-```
-
-
-
-
-
-### **Step 1:** Generate mapping file.
-
-a. Generate a mapping file using the `generate_mappings.py` script. 
-b. Look at your mapping file. Make sure it's not empty. Edit it, if there are any special cases you'd like to account for.
-
-```
-$ python generate_mappings.py -i ../datasets/ds000031 -o ./examples                                                                              
-====================
-Dataset Summary
-====================
-Total number of sessions with 'anat' directory in the dataset: 24
-Sessions with 'anat' directory with at least one T1w scan: 22
-Sessions without a T1w scan: 2
-List of sessions without a T1w scan:
- ['sub-01/ses-053', 'sub-01/ses-016']
-
-Please find the mapping file in JSON format and other helpful logs at /Users/arshithab/dsst-defacing-pipeline/examples
-```
-
-### **Step 2:** Deface scans
+### **Step 1:** Deface scans
 Run `dsst_defacing_wf.py` script that calls on `deface.py` and `register.py` to deface scans in the dataset. 
 
 #### Option 1: Serially
 If you have a small dataset with less than 10 subjects, then it might be easiest to run the defacing algorithm serially.
 
 ```bash
-python dsst_defacing_wf.py -i ../datasets/ds000031 -m examples/primary_to_others_mapping.json -o examples
+python dsst_defacing_wf.py -i ../datasets/ds000031 -o examples
 ```
 
 #### Option 2: Parallelly
@@ -103,7 +54,7 @@ for i in `ls -d ../datasets/toy/*`; do SUBJ=$(echo $i | sed 's|../datasets/toy/|
 swarm -f ./examples/defacing_parallel.swarm --module afni,fsl --merge-output --logdir ./examples/swarm_log
 ```
 
-### **Step 3:** Visually QC defaced scans.
+### **Step 2:** Visually QC defaced scans.
 
 Visual QC defacing accuracy gallery https://raamana.github.io/visualqc/gallery_defacing.html
 
