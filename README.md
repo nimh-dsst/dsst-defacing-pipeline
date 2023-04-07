@@ -36,33 +36,6 @@ Download data in `anat` directories of the dataset.
 datalad get sub-01/ses-*/anat
 ```
 
-BIDS tree snippet post-download:
-
-```bash
-$ tree ../datasets/ds000031/
-../datasets/ds000031/
-├── CHANGES
-├── README
-├── dataset_description.json
-├── events.json
-├── participants.json
-├── participants.tsv
-├── sub-01
-│   ├── ses-001
-│   │   ├── anat
-│   │   │   ├── sub-01_ses-001_T1w.json
-│   │   │   └── sub-01_ses-001_T1w.nii.gz 
-│   │   ├── sub-01_ses-001_scans.json
-│   │   └── sub-01_ses-001_scans.tsv
-│   ├── ses-003
-│   │   ├── anat
-│   │   ├── sub-01_ses-003_scans.json
-│   │   └── sub-01_ses-003_scans.tsv
-...
-└── task-spatialwm_events.json
-```
-
-
 ### **Step 1:** Deface scans
 Run `dsst_defacing_wf.py` script that calls on `deface.py` and `register.py` to deface scans in the dataset. 
 
