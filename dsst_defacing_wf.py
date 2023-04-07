@@ -7,6 +7,7 @@ import subprocess
 from pathlib import Path
 
 import deface
+import generate_mappings
 
 
 def get_args():
@@ -19,13 +20,9 @@ def get_args():
     parser.add_argument('--output', '-o', action='store', type=Path, required=True, dest='output',
                         help='Path to output BIDS dataset with defaced scan.')
 
-    parser.add_argument('--mapping-file', '-m', action='store', type=Path, required=True, dest='mapping',
-                        help='Path to primary to other/secondary scans mapping file.')
-
     parser.add_argument('--participant-id', '-p', dest='subj_id', action='store', required=False, default=None,
                         help="Subject ID associated with the participant. Since the input dataset is assumed to be \
                         BIDS valid, this argument expects subject IDs with 'sub-' prefix.")
-    # This argument is valid only if a subject ID is provided
     # TODO Test the session id argument
     parser.add_argument('--session-id', '-s', dest='sess_id', action='store', required=False, default=None,
                         help="Session ID associated with the subject ID. If the BIDS input dataset contains sessions, \
@@ -39,7 +36,7 @@ def get_args():
         print("Session ID provided without a subject ID. Invalid Argument.")
         raise ValueError
 
-    return args.input.resolve(), args.output.resolve(), args.mapping.resolve(), args.subj_id, args.sess_id, args.no_clean
+    return args.input.resolve(), args.output.resolve(), args.subj_id, args.sess_id, args.no_clean
 
 
 def run_command(cmdstr):
@@ -137,19 +134,17 @@ def vqcdeface_prep(input_dir, defacing_output_dir):
 
     create_vqc_id_list(vqcdeface_dir)
 
-    vqcdeface_cmd = f"vqcdeface -u {vqcdeface_dir} -i {vqcdeface_dir / 'vqcdeface_id_list.txt'} \
-    -m orig.nii.gz -d defaced.nii.gz -r defaced_render"
+    vqcdeface_cmd = f"vqcdeface -u {vqcdeface_dir} -i {vqcdeface_dir / 'vqcdeface_id_list.txt'} -m orig.nii.gz -d defaced.nii.gz -r defaced_render"
 
     return vqcdeface_cmd
 
 
 def main():
     # get command line arguments
-    input_dir, output, mapping, subj_id, sess_id, no_clean = get_args()
+    input_dir, output, subj_id, sess_id, no_clean = get_args()
 
-    # load primary to other scans mapping into a dict
-    with open(mapping, 'r') as f:
-        mapping_dict = json.load(f)
+    # run generate mapping script
+    mapping_dict = generate_mappings.crawl(input_dir, output)
 
     # create a separate bids tree with only defaced scans
     defacing_outputs = output / 'bids_defaced'
@@ -176,7 +171,7 @@ def main():
         if missing_refacer_out is not None:
             afni_refacer_failures.extend(missing_refacer_out)
 
-    with open(output / 'logs' / 'missing_afni_refacer_output.txt', 'w') as f:
+    with open(output / 'logs' / 'failed_afni_refacer_output.txt', 'w') as f:
         f.write('\n'.join(afni_refacer_failures))  # TODO Not very useful when running the pipeline in parallel
 
     # reorganizing the directory with defaced images into BIDS tree

@@ -13,24 +13,11 @@
     visualqc T1 MRI utility : https://raamana.github.io/visualqc/cli_t1_mri.html
 """
 
-import argparse
 import json
 import random
 import subprocess
 from collections import defaultdict
 from pathlib import Path
-
-
-def get_args():
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description=__doc__)
-
-    parser.add_argument('-i', '--input', type=Path, action='store', dest='inputdir', metavar='INPUT_DIR',
-                        help='Path to input BIDS directory.')
-    parser.add_argument('-o', '--output', type=Path, action='store', dest='outdir', metavar='SCRIPT_OUTPUT_DIR',
-                        default=Path('.'), help="Path to directory that'll contain this script's outputs.")
-    args = parser.parse_args()
-
-    return args.inputdir.resolve(), args.outdir.resolve()
 
 
 def run_command(cmdstr, logfile):
@@ -88,9 +75,9 @@ def primary_scans_qc_prep(mapping_dict, visualqc_prep):
         dest.mkdir(parents=True, exist_ok=True)
 
         id_list.append(dest)
-        Path(dest / 'primary.nii.gz').symlink_to(primary)
-        # ln_cmd = f"ln -s {primary} {}"
-        # run_command(ln_cmd, "")
+        primary_link = dest / 'primary.nii.gz'
+        if not primary_link.exists():
+            primary_link.symlink_to(primary)
 
     with open(visualqc_prep / 'id_list_t1.txt', 'w') as f:
         f.write('\n'.join([str(i) for i in id_list]))
@@ -135,26 +122,23 @@ def get_anat_dir_paths(subj_dir_path):
     :param Path subj_dir_path : Absolute path to subject directory.
     :return: A list of absolute paths to anat directory(s) within subject tree.
     """
-    anat_dirs = []
-    no_anat_dirs = []
 
     # check if there are session directories
-    # sess_exist, sessions = is_sessions(subj_dir_path)
     sessions = list(subj_dir_path.glob('ses-*'))
     sess_exist = True if sessions else False
 
+    no_anat_dirs = []
+    anat_dirs = []
     if not sess_exist:
-        anat_dir = subj_dir_path.joinpath('anat')
+        anat_dir = subj_dir_path / 'anat'
         if not anat_dir.exists():
-            # print(f'No anat directories found for {subj_dir_path.name}.\n')
             no_anat_dirs.append(subj_dir_path)
         else:
             anat_dirs.append(anat_dir)
     else:
         for sess in sessions:
-            anat_dir = sess.joinpath('anat')
+            anat_dir = sess / 'anat'
             if not anat_dir.exists():
-                # print(f'No anat directories found for {subj_dir_path.name} and {sess.name}.\n')
                 no_anat_dirs.append(sess)
             else:
                 anat_dirs.append(anat_dir)
@@ -183,7 +167,7 @@ def update_mapping_dict(mapping_dict, anat_dir, is_sessions, sidecars, t1_unavai
         # latest T1w scan in the session based on acquisition time
         nifti_fname = t1_acq_time_list[0][0].name.split('.')[0] + '.nii.gz'
 
-        primary_t1 = t1_acq_time_list[0][0].parent.joinpath(nifti_fname)
+        primary_t1 = t1_acq_time_list[0][0].parent / nifti_fname
         others = [str(s) for s in list(anat_dir.glob('*.nii*')) if s != primary_t1]
         t1_available.append(anat_dir.parent)
     else:
@@ -214,26 +198,23 @@ def summary_to_stdout(vqc_t1_cmd, sess_ct, t1s_found, t1s_not_found, no_anat_dir
         print(f"Sessions without a T1w scan: {len(t1s_not_found)}")
         print(f"List of sessions without a T1w scan:\n {readable_path_list}")
     print(
-        f"\nPlease find the mapping file in JSON format at {str(output.joinpath('primary_to_others_mapping.json'))} \nand other helpful logs at {str(output.joinpath('logs'))}\n")
+        f"\nPlease find the mapping file in JSON format at {str(output / 'primary_to_others_mapping.json')} \nand other helpful logs at {str(output / 'logs')}\n")
 
 
-def main():
-    input, output = get_args()
+def crawl(input_dir, output):
+    # make dir for log files and visualqc prep
+    dir_names = ['logs', 'visualqc_prep']
+    for dir_name in dir_names:
+        output.joinpath(dir_name).mkdir(parents=True, exist_ok=True)
 
-    # make a logs dir
-    output.joinpath('logs').mkdir(parents=True, exist_ok=True)
-
-    # make qc_prep dir
-    output.joinpath('visualqc_prep').mkdir(parents=True, exist_ok=True)
-
-    # input_layout = bids.BIDSLayout(input) # taking insane amounts of time so not using pybids
     t1s_not_found = []
     t1s_found = []
     total_sessions = 0
 
     mapping_dict = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
 
-    for subj_dir in list(input.glob('sub-*')):
+    for subj_dir in list(input_dir.glob('sub-*')):
+        # subj_id = subj_dir.name
         anat_dirs, no_anat_dirs, sess_exist = get_anat_dir_paths(subj_dir)
         for anat_dir in anat_dirs:
             total_sessions += 1
@@ -242,25 +223,20 @@ def main():
                                                                          t1_sidecars, t1s_not_found, t1s_found)
 
     # write mapping dict to file
-    with open(output.joinpath('primary_to_others_mapping.json'), 'w') as f1:
+    with open(output / 'primary_to_others_mapping.json', 'w') as f1:
         json.dump(mapping_dict, f1, indent=4)
 
     # write session paths without T1w scan to file
-    with open(output.joinpath('logs', 't1_unavailable.txt'), 'w') as f2:
-        for sess_path in t1s_not_found:
-            f2.write(str(sess_path) + '\n')
+    with open(output / 'logs' / 't1_unavailable.txt', 'w') as f2:
+        f2.write('\n'.join([str(sess_path) for sess_path in t1s_not_found]))
+
+    with open(output / 'logs' / 'anat_unavailable.txt', 'w') as f3:
+        f3.write('\n'.join([str(p) for p in no_anat_dirs]))
 
     # write vqc command to file
     vqc_t1_mri_cmd = primary_scans_qc_prep(mapping_dict, output / 'visualqc_prep')
-    with open(output / 'visualqc_prep' / 't1_mri_qc_cmd', 'w') as f3:
-        f3.write(f"{vqc_t1_mri_cmd}\n")
-
-    with open(output.joinpath('logs', 'anat_unavailable.txt'), 'w') as f4:
-        for p in no_anat_dirs:
-            f4.write(str(p) + '\n')
+    with open(output / 'visualqc_prep' / 't1_mri_qc_cmd', 'w') as f4:
+        f4.write(f"{vqc_t1_mri_cmd}\n")
 
     summary_to_stdout(vqc_t1_mri_cmd, total_sessions, t1s_found, t1s_not_found, no_anat_dirs, output)
-
-
-if __name__ == "__main__":
-    main()
+    return mapping_dict

@@ -68,7 +68,7 @@ def run_afni_refacer(primary_t1, others, subj_input_dir, sess_dir, output_dir):
                 acq = ""
 
         # TODO test on hv_protocol dataset to confirm. Is this directory even necessary with the new pipeline?
-        subj_outdir = output_dir / subj_id / sess_id / 'anat' / acq[0]
+        subj_outdir = output_dir / subj_id / sess_id / 'anat' / acq
 
         prefix = primary_t1.name.split('.')[0]  # filename without the extension
 
@@ -96,7 +96,7 @@ def run_afni_refacer(primary_t1, others, subj_input_dir, sess_dir, output_dir):
         # rename afni workdirs
         workdir_list = list(subj_outdir.glob('*work_refacer*'))
         if len(workdir_list) > 0:
-            missing_refacer_out = None
+            missing_refacer_out = ""
             log_fileobj.flush()
             new_afni_workdir = rename_afni_workdir(workdir_list[0])
 
