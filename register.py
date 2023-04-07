@@ -2,6 +2,8 @@ import subprocess
 
 
 def run_command(cmdstr, logfile):
+    if not logfile:
+        logfile = subprocess.PIPE
     subprocess.run(cmdstr, stdout=logfile, stderr=subprocess.STDOUT, encoding='utf8', shell=True)
 
 

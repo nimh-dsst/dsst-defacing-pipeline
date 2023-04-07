@@ -1,7 +1,9 @@
 import argparse
 import gzip
 import json
+import re
 import shutil
+import subprocess
 from pathlib import Path
 
 import deface
@@ -40,8 +42,8 @@ def get_args():
     return args.input.resolve(), args.output.resolve(), args.mapping.resolve(), args.subj_id, args.sess_id, args.no_clean
 
 
-# def run_command(cmdstr):
-#     subprocess.run(cmdstr, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding='utf8', shell=True)
+def run_command(cmdstr):
+    subprocess.run(cmdstr, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding='utf8', shell=True)
 
 
 def write_to_file(file_content, filepath):
@@ -85,7 +87,6 @@ def reorganize_into_bids(input_dir, defacing_outputs, mapping_dict, no_clean):
             if nii_filepath.name.startswith('tmp.99.result'):
                 # convert to nii.gz, rename and copy over to anat dir
                 gz_file = anat_dir / Path(primary_t1).name
-                print(nii_filepath)
                 compress_to_gz(nii_filepath, gz_file)
 
             elif nii_filepath.name.endswith('_defaced.nii.gz'):
@@ -103,6 +104,45 @@ def reorganize_into_bids(input_dir, defacing_outputs, mapping_dict, no_clean):
             shutil.rmtree(intermediate_files_dir)
 
 
+def generate_3d_renders(defaced_img, render_outdir):
+    rotations = [(45, 5, 10), (-45, 5, 10)]
+    for idx, rot in enumerate(rotations):
+        yaw, pitch, roll = rot[0], rot[1], rot[2]
+        outfile = render_outdir.joinpath('defaced_render_' + str(idx) + '.png')
+        fsleyes_render_cmd = f"fsleyes render --scene 3d -rot {yaw} {pitch} {roll} --outfile {outfile} {defaced_img} -dr 20 250 -in spline -bf 0.3 -r 100 -ns 500"
+        run_command(fsleyes_render_cmd)
+
+
+def create_vqc_id_list(vqc_dir):
+    rel_paths_to_orig = [re.sub('/orig.nii.gz', '', str(o.relative_to(vqc_dir))) for o in vqc_dir.rglob('orig.nii.gz')]
+    with open(vqc_dir / 'vqcdeface_id_list.txt', 'w') as f:
+        f.write('\n'.join(rel_paths_to_orig))
+
+
+def vqcdeface_prep(input_dir, defacing_output_dir):
+    vqcdeface_dir = defacing_output_dir.parent / 'visualqc_prep' / 'vqcdeface'
+    for defaced_img in defacing_output_dir.rglob('*.nii.gz'):
+        # please kill me now ughhh
+        entities = defaced_img.name.split('.')[0].split('_')
+        vqcd_subj_dir = vqcdeface_dir / f"{'/'.join(entities)}"
+        vqcd_subj_dir.mkdir(parents=True, exist_ok=True)
+
+        defaced_link = vqcd_subj_dir / 'defaced.nii.gz'
+        if not defaced_link.exists(): defaced_link.symlink_to(defaced_img)
+        generate_3d_renders(defaced_img, vqcd_subj_dir)
+
+        img = list(input_dir.rglob(defaced_img.name))[0]
+        img_link = vqcd_subj_dir / 'orig.nii.gz'
+        if not img_link.exists(): img_link.symlink_to(img)
+
+    create_vqc_id_list(vqcdeface_dir)
+
+    vqcdeface_cmd = f"vqcdeface -u {vqcdeface_dir} -i {vqcdeface_dir / 'vqcdeface_id_list.txt'} \
+    -m orig.nii.gz -d defaced.nii.gz -r defaced_render"
+
+    return vqcdeface_cmd
+
+
 def main():
     # get command line arguments
     input_dir, output, mapping, subj_id, sess_id, no_clean = get_args()
@@ -112,11 +152,10 @@ def main():
         mapping_dict = json.load(f)
 
     # create a separate bids tree with only defaced scans
-    defacing_outputs = output / 'defacing_outputs'
+    defacing_outputs = output / 'bids_defaced'
     defacing_outputs.mkdir(parents=True, exist_ok=True)
 
     afni_refacer_failures = []  # list to capture afni_refacer_run failures
-    subj_sess_list = []
 
     if subj_id and not sess_id:  # parallel execution at subject level
         subj_dir = input_dir / subj_id
@@ -127,8 +166,9 @@ def main():
         subj_sess_list = [(subj_dir, subj_dir / sess_id)]
 
     else:  # neither subjid nor sessid given; running pipeline serially
+        subj_sess_list = []
         for subj_dir in list(input_dir.glob('sub-*')):
-            subj_sess_list = [(subj_dir, sess_dir) for sess_dir in get_sess_dirs(subj_dir, mapping_dict)]
+            subj_sess_list.extend([(subj_dir, sess_dir) for sess_dir in get_sess_dirs(subj_dir, mapping_dict)])
 
     # calling deface.py script
     for subj_sess in subj_sess_list:
@@ -136,10 +176,17 @@ def main():
         if missing_refacer_out is not None:
             afni_refacer_failures.extend(missing_refacer_out)
 
-    with open(output / 'defacing_pipeline_logs' / 'missing_afni_refacer_output.txt', 'w') as f:
-        f.write('\n'.join(afni_refacer_failures))
+    with open(output / 'logs' / 'missing_afni_refacer_output.txt', 'w') as f:
+        f.write('\n'.join(afni_refacer_failures))  # TODO Not very useful when running the pipeline in parallel
 
+    # reorganizing the directory with defaced images into BIDS tree
     reorganize_into_bids(input_dir, defacing_outputs, mapping_dict, no_clean)
+
+    # prep for visual inspection using visualqc deface
+    vqcdeface_cmd = vqcdeface_prep(input_dir, defacing_outputs)
+    print(f"Run the following command to start a VisualQC Deface session:\n{vqcdeface_cmd}")
+    with open(output / 'visualqc_prep' / 'defacing_qc_cmd', 'w') as f:
+        f.write(vqcdeface_cmd)
 
 
 if __name__ == "__main__":

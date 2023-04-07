@@ -13,7 +13,7 @@ def run_command(cmdstr, logfile):
 
 def rename_afni_workdir(workdir_path):
     default_prefix = workdir_path.name.split('.')[1]
-    required_file_prefixes = ('__work', 'logs')
+    required_file_prefixes = ('__work', 'defacing.log')
     to_be_deleted_files = [
         str(f) for f in list(workdir_path.parent.glob('*'))
         if not (f.name.startswith(required_file_prefixes) or f.name.endswith('QC'))]
@@ -61,24 +61,23 @@ def run_afni_refacer(primary_t1, others, subj_input_dir, sess_dir, output_dir):
 
         # setting up directory structure
         entities = primary_t1.name.split('_')
-        acq = [i.split('-')[1] for i in entities if i.startswith('acq-')]
+        for i in entities:
+            if i.startswith('acq-'):
+                acq = i.split('-')[1]
+            else:
+                acq = ""
 
-        if acq:  # TODO test on hv_protocol dataset to confirm. Is this directory even necessary with the new pipeline?
-            subj_outdir = output_dir / subj_id / sess_id / 'anat' / acq[0]
-        else:
-            subj_outdir = output_dir / subj_id / sess_id / 'anat'
-        print(subj_outdir)
+        # TODO test on hv_protocol dataset to confirm. Is this directory even necessary with the new pipeline?
+        subj_outdir = output_dir / subj_id / sess_id / 'anat' / acq[0]
 
         prefix = primary_t1.name.split('.')[0]  # filename without the extension
 
-        # mkdir_cmds = f"mkdir -p {subj_outdir}"  # make output directories within subject directory
-        subj_outdir.mkdir(parents=True, exist_ok=True)
+        subj_outdir.mkdir(parents=True, exist_ok=True)  # make output directories within subject directory
         # afni refacer commands
         refacer_cmd = f"@afni_refacer_run -input {primary_t1} -mode_deface -no_clean -prefix {fspath(subj_outdir / prefix)}"
 
         # TODO remove module load afni
         full_cmd = f"module load afni ; {refacer_cmd}"
-        print(full_cmd)
 
         # TODO make log text less ugly; perhaps in a separate function
         log_filename = subj_outdir / 'defacing_pipeline.log'
@@ -88,6 +87,8 @@ def run_afni_refacer(primary_t1, others, subj_input_dir, sess_dir, output_dir):
             f"{full_cmd}\n"
             f"==========================================================================================\n")
         log_fileobj.flush()  # clear file object buffer
+
+        # stdout text
         print(f"Running @afni_refacer_run on {primary_t1.name}\nFind command logs at {log_filename}")
         run_command(full_cmd, log_fileobj)
         print(f"@afni_refacer_run command completed on {primary_t1.name}\n")
@@ -95,15 +96,16 @@ def run_afni_refacer(primary_t1, others, subj_input_dir, sess_dir, output_dir):
         # rename afni workdirs
         workdir_list = list(subj_outdir.glob('*work_refacer*'))
         if len(workdir_list) > 0:
+            missing_refacer_out = None
             log_fileobj.flush()
             new_afni_workdir = rename_afni_workdir(workdir_list[0])
 
             # register other scans to the primary scan
             register.register_to_primary_scan(subj_input_dir, new_afni_workdir, primary_t1, others, log_fileobj)
-
-        log_fileobj.write(
-            f"@afni_refacer_run work directory not found. Most probably because the refacer command failed.")
-        missing_refacer_out = prefix
+        else:
+            log_fileobj.write(
+                f"@afni_refacer_run work directory not found. Most probably because the refacer command failed.")
+            missing_refacer_out = prefix
 
         return missing_refacer_out
 
