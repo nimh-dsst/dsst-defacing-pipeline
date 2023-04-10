@@ -32,10 +32,10 @@ def preprocess_facemask(fmask_path, logfile_obj):
 
 
 def get_intermediate_filenames(outdir, prefix):
-    mat = f"{outdir.joinpath(prefix)}_reg.mat"
-    reg_out = f"{outdir.joinpath('registered.nii.gz')}"
-    mask = f"{outdir.joinpath(prefix)}_mask.nii.gz"
-    defaced_out = f"{outdir.joinpath(prefix)}_defaced.nii.gz"
+    mat = f"{outdir / prefix}_reg.mat"
+    reg_out = f"{outdir / prefix}_registered.nii.gz"
+    mask = f"{outdir / prefix}_mask.nii.gz"
+    defaced_out = f"{outdir / prefix}_defaced.nii.gz"
     return mat, reg_out, mask, defaced_out
 
 
@@ -58,7 +58,8 @@ def register_to_primary_scan(subj_dir, afni_workdir, primary_scan, other_scans_l
 
         matrix, reg_out, other_mask, other_defaced = get_intermediate_filenames(other_outdir, other_prefix)
 
-        mkdir_cmd = f"mkdir -p {other_outdir}; cp {other} {other_outdir.joinpath('original.nii.gz')}"
+        other_outdir.mkdir(parents=True, exist_ok=True)
+        cp_cmd = f"cp {other} {other_outdir.joinpath('original.nii.gz')}"
 
         flirt_cmd = f"flirt -dof 6 -cost mutualinfo -searchcost mutualinfo -in {primary_scan} "f"-ref {other} -omat {matrix} -out {reg_out}"
 
@@ -66,5 +67,5 @@ def register_to_primary_scan(subj_dir, afni_workdir, primary_scan, other_scans_l
         applyxfm_cmd = f"flirt -interp nearestneighbour -applyxfm -init {matrix} "f"-in {t1_mask} -ref {other} -out {other_mask}"
 
         mask_cmd = f"fslmaths {other} -mas {other_mask} {other_defaced}"
-        full_cmd = " ; ".join(["module load fsl", mkdir_cmd, flirt_cmd, applyxfm_cmd, mask_cmd]) + '\n'
+        full_cmd = " ; ".join(["module load fsl", cp_cmd, flirt_cmd, applyxfm_cmd, mask_cmd]) + '\n'
         run_command(full_cmd, log_fileobj)

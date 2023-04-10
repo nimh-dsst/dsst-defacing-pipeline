@@ -42,7 +42,7 @@ def primary_scans_qc_prep(mapping_dict, visualqc_prep):
     :return str vqc_t1_mri_cmd: A visualqc T1 MRI command string.
     """
 
-    interested_keys = ('primary_t1', 'others')
+    interested_keys = ['primary_t1', 'others']
     primaries = []
     for subjid in mapping_dict.keys():
 

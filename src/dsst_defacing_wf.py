@@ -65,6 +65,13 @@ def compress_to_gz(input_file, output_file):
                 f_output.writelines(f_input)
 
 
+def copy_over_sidecar(scan_filepath, input_anat_dir, output_anat_dir):
+    prefix = '_'.join([i for i in re.split('_|\.', scan_filepath.name) if i not in ['defaced', 'nii', 'gz']])
+    filename = prefix + '.json'
+    json_sidecar = input_anat_dir / filename
+    shutil.copy2(json_sidecar, output_anat_dir / filename)
+
+
 def reorganize_into_bids(input_dir, defacing_outputs, mapping_dict, no_clean):
     # make afni_intermediate_files for each session within anat dir
     for anat_dir in defacing_outputs.rglob('anat'):
@@ -86,9 +93,14 @@ def reorganize_into_bids(input_dir, defacing_outputs, mapping_dict, no_clean):
                 gz_file = anat_dir / Path(primary_t1).name
                 compress_to_gz(nii_filepath, gz_file)
 
+                # copy over corresponding json sidecar
+                copy_over_sidecar(Path(primary_t1), input_dir / anat_dir.relative_to(defacing_outputs), anat_dir)
+
             elif nii_filepath.name.endswith('_defaced.nii.gz'):
                 new_filename = '_'.join(nii_filepath.name.split('_')[:-1]) + '.nii.gz'
                 shutil.copy2(nii_filepath, str(anat_dir / new_filename))
+
+                copy_over_sidecar(nii_filepath, input_dir / anat_dir.relative_to(defacing_outputs), anat_dir)
 
         # move QC images and afni intermediate files to a new directory
         intermediate_files_dir = anat_dir / 'afni_intermediate_files'
@@ -118,7 +130,9 @@ def create_vqc_id_list(vqc_dir):
 
 def vqcdeface_prep(input_dir, defacing_output_dir):
     vqcdeface_dir = defacing_output_dir.parent / 'visualqc_prep' / 'vqcdeface'
-    for defaced_img in defacing_output_dir.rglob('*.nii.gz'):
+    interested_files = [f for f in defacing_output_dir.rglob('*.nii.gz') if
+                        'afni_intermediate_files' not in str(f).split('/')]
+    for defaced_img in interested_files:
         # please kill me now ughhh
         entities = defaced_img.name.split('.')[0].split('_')
         vqcd_subj_dir = vqcdeface_dir / f"{'/'.join(entities)}"
