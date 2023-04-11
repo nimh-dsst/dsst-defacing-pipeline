@@ -33,6 +33,8 @@ optional arguments:
 
 The script can be run serially on a BIDS dataset or in parallel at subject/session level. The three methods of running the script have been described below with example commands:  
 
+**NOTE:** In the example commands below, <path/to/BIDS/input/dataset> and <path/to/desired/output/directory> are placeholders for paths to input and output directories respectively. 
+
 #### Option 1: Serially
 If you have a small dataset with less than 10 subjects, then it might be easiest to run the defacing algorithm serially.
 
@@ -44,7 +46,7 @@ python dsst_defacing_wf.py -i <path/to/BIDS/input/dataset> -o <path/to/desired/o
 If you have dataset with over 10 subjects, then it might be more practical to run the pipeline in parallel for every subject in the dataset using the `-p/--participant-id` option as follows:
 
 ```bash
-python dsst_defacing_wf.py -i <path/to/BIDS/input/dataset> -o <path/to/desired/output/directory> -p sub-<index>
+python dsst_defacing_wf.py -i <path/to/BIDS/input/dataset> -o <path/to/desired/defacing/output/directory> -p sub-<index>
 ```
 
   a. Assuming these scripts are run on the NIH HPC system, the first step would be to create a `swarm` file:
@@ -52,27 +54,30 @@ python dsst_defacing_wf.py -i <path/to/BIDS/input/dataset> -o <path/to/desired/o
   ```bash
   for i in `ls -d <path/to/BIDS/input/dataset>*`; do \
     SUBJ=$(echo $i | sed 's|<path/to/BIDS/input/dataset>||g' ); \
-    echo "python dsst_defacing_wf.py -i <path/to/BIDS/input/dataset> -o <path/to/desired/output/directory> -s $SUBJ"; \
+    echo "python dsst_defacing_wf.py -i <path/to/BIDS/input/dataset> -o <path/to/desired/defacing/output/directory> -s $SUBJ"; \
     done > defacing_parallel_subject_level.swarm
   ```
   Purpose: Loop through the dataset and find all subject directories to construct `dsst_defacing_wf.py` command with `-p/--participant-id` option. 
 
   b. Run the swarm file with following command to start a swarm job
   ```bash
-  swarm -f .defacing_parallel_subject_level.swarm --module afni,fsl --merge-output --logdir swarm_log
+  swarm -f defacing_parallel_subject_level.swarm --module afni,fsl --merge-output --logdir swarm_log
   ```
 
 #### Option 3: In parallel at session level
 If the input dataset has multiple sessions per subject, then run the pipeline on every session in the dataset parallelly. Similar to Option 2, the following commands loop through the dataset to find subject and session IDs to create a `swarm` file to be run on NIH HPC systems.
 
 ```bash
-for i in `ls -d <path/to/BIDS/input/dataset>*`; do \
-  SUBJ=$(echo $i | sed 's|<path/to/BIDS/input/dataset>||g' ); \
-  echo "python dsst_defacing_wf.py -i <path/to/BIDS/input/dataset> -o <path/to/desired/output/directory> -s $SUBJ"; \
-  done > defacing_parallel_subject_level.swarm
+for i in `ls -d <path/to/BIDS/input/dataset>*`; do
+  SUBJ=$(echo $i | sed "s|<path/to/BIDS/input/dataset>/||g" );
+  for j in `ls -d <path/to/BIDS/input/dataset>/${SUBJ}/*`; do
+    SESS=$(echo $j | sed "s|<path/to/BIDS/input/dataset>/${SUBJ}/||g" )
+    echo "python dsst_defacing_wf.py -i <path/to/BIDS/input/dataset> -o <path/to/desired/defacing/output/directory> -p ${SUBJ} -s ${SESS}";
+    done;
+  done > defacing_parallel_session_level.swarm
 ```
 ```bash
-swarm -f .defacing_parallel_subject_level.swarm --module afni,fsl --merge-output --logdir swarm_log
+swarm -f defacing_parallel_subject_level.swarm --module afni,fsl --merge-output --logdir swarm_log
 ```
 
 ### Visually inspect defaced scans using VisualQC
@@ -81,7 +86,7 @@ Pre-requisite: Install VisualQC from https://raamana.github.io/visualqc/installa
 
 Once VisualQC is installed, please run the following command to open VisualQC deface GUI to start visually inspecting defaced scans:
 ```bash
-sh <path/to/desired/output/directory>/visualqc_prep/defacing_qc_cmd
+sh <path/to/defacing/output/directory>/visualqc_prep/defacing_qc_cmd
 ```
 
 Visual QC defacing accuracy gallery https://raamana.github.io/visualqc/gallery_defacing.html
