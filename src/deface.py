@@ -13,7 +13,7 @@ def run_command(cmdstr, logfile):
 
 def rename_afni_workdir(workdir_path):
     default_prefix = workdir_path.name.split('.')[1]
-    required_file_prefixes = ('__work', 'defacing.log')
+    required_file_prefixes = ('__work', 'defacing_pipeline.log')
     to_be_deleted_files = [
         str(f) for f in list(workdir_path.parent.glob('*'))
         if not (f.name.startswith(required_file_prefixes) or f.name.endswith('QC'))]
