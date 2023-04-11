@@ -5,6 +5,7 @@ as_qc_failures.csv
 *_examples/
 scripts_outputs/
 .idea/
+.vscode/
 examples/visualqc_prep/
 examples/sub-01/
 user-testing/*

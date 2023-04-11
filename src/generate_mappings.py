@@ -95,16 +95,15 @@ def sort_by_acq_time(sidecars):
     """
     acq_time_dict = dict()
     acq_time_field_vars = ["AcquisitionTime", "AcquisitionDateTime"]
-    try:
-        for sidecar in sidecars:
-            with open(sidecar, 'r') as f:
-                data = json.load(f)
-                for field in acq_time_field_vars:
-                    if field in data.keys():
-                        acq_time_dict[sidecar] = data[field]
-        acq_time_sorted_list = sorted(acq_time_dict.items(), key=lambda key_val_tup: key_val_tup[1], reverse=True)
+    for sidecar in sidecars:
+        with open(sidecar, 'r') as f:
+            data = json.load(f)
+            for field in acq_time_field_vars:
+                if field in data.keys():
+                    acq_time_dict[sidecar] = data[field]
+    acq_time_sorted_list = sorted(acq_time_dict.items(), key=lambda key_val_tup: key_val_tup[1], reverse=True)
 
-    except:
+    if acq_time_sorted_list == []:
         newline_sidecars = '\n'.join(
             [str(s) for s in sidecars])  # need this since f-string expression part cannot include a backslash
         print(
@@ -165,9 +164,9 @@ def update_mapping_dict(mapping_dict, anat_dir, is_sessions, sidecars, t1_unavai
         t1_acq_time_list = sort_by_acq_time(sidecars)
 
         # latest T1w scan in the session based on acquisition time
-        nifti_fname = t1_acq_time_list[0][0].name.split('.')[0] + '.nii.gz'
+        nifti_fname = t1_acq_time_list[0].name.split('.')[0] + '.nii.gz'
 
-        primary_t1 = t1_acq_time_list[0][0].parent / nifti_fname
+        primary_t1 = t1_acq_time_list[0].parent / nifti_fname
         others = [str(s) for s in list(anat_dir.glob('*.nii*')) if s != primary_t1]
         t1_available.append(anat_dir.parent)
     else:
