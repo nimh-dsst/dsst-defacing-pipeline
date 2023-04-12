@@ -77,7 +77,7 @@ for i in `ls -d <path/to/BIDS/input/dataset>*`; do
   done > defacing_parallel_session_level.swarm
 ```
 ```bash
-swarm -f defacing_parallel_subject_level.swarm --module afni,fsl --merge-output --logdir swarm_log
+swarm -f defacing_parallel_session_level.swarm --module afni,fsl --merge-output --logdir swarm_log
 ```
 
 ### Visually inspect defaced scans using VisualQC

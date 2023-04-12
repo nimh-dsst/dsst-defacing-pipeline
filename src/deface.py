@@ -22,7 +22,7 @@ def rename_afni_workdir(workdir_path):
     new_workdir_path = workdir_path.parent / f'workdir_{default_prefix}'
     workdir_path.rename(new_workdir_path)
 
-    print(f"Removing unwanted files and renaming AFNI workdirs..")
+    print(f"Removing unwanted files and renaming AFNI workdirs..\n")
 
     return new_workdir_path
 

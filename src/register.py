@@ -19,7 +19,7 @@ def preprocess_facemask(fmask_path, logfile_obj):
 
     # arithmetic on the result from above
     c2 = f"fslmaths {prefix}.nii.gz -abs -binv {defacemask}"
-    print(f"Splitting the facemask volume at {fmask_path} and binarizing the resulting volume... \n ")
+    print(f"Generating a defacemask... \n ")
     run_command('; '.join([c0, c1, c2]), logfile_obj)
     try:
         if defacemask.exists():
@@ -59,13 +59,16 @@ def register_to_primary_scan(subj_dir, afni_workdir, primary_scan, other_scans_l
         matrix, reg_out, other_mask, other_defaced = get_intermediate_filenames(other_outdir, other_prefix)
 
         other_outdir.mkdir(parents=True, exist_ok=True)
-        cp_cmd = f"cp {other} {other_outdir.joinpath('original.nii.gz')}"
+        cp_cmd = f"cp {other} {other_outdir / other_prefix}"
 
-        flirt_cmd = f"flirt -dof 6 -cost mutualinfo -searchcost mutualinfo -in {primary_scan} "f"-ref {other} -omat {matrix} -out {reg_out}"
+        flirt_cmd = f"flirt -dof 6 -cost mutualinfo -searchcost mutualinfo -in {primary_scan} -ref {other} -omat {matrix} -out {reg_out}"
 
         # t1 mask can be found in the afni work directory
-        applyxfm_cmd = f"flirt -interp nearestneighbour -applyxfm -init {matrix} "f"-in {t1_mask} -ref {other} -out {other_mask}"
+        applyxfm_cmd = f"flirt -interp nearestneighbour -applyxfm -init {matrix} -in {t1_mask} -ref {other} -out {other_mask}"
 
         mask_cmd = f"fslmaths {other} -mas {other_mask} {other_defaced}"
+
         full_cmd = " ; ".join(["module load fsl", cp_cmd, flirt_cmd, applyxfm_cmd, mask_cmd]) + '\n'
+
+        print(f"Registering {other.name} to {primary_scan.name} and applying defacemask...")
         run_command(full_cmd, log_fileobj)

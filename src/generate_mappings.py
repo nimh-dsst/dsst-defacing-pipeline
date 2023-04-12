@@ -32,7 +32,7 @@ def run_command(cmdstr, logfile):
     subprocess.run(cmdstr, stdout=logfile, stderr=subprocess.STDOUT, encoding='utf8', shell=True)
 
 
-def primary_scans_qc_prep(mapping_dict, visualqc_prep):
+def primary_scans_qc_prep(mapping_dict, qc_prep):
     """Prepares a directory tree with symbolic links to primary scans and an id_list of primary scans to be used in the
     visualqc_t1_mri command.
 
@@ -57,7 +57,7 @@ def primary_scans_qc_prep(mapping_dict, visualqc_prep):
         # remove empty strings from primaries list
         primaries = [p for p in primaries if p != '']
 
-    vqc_t1_mri = visualqc_prep / 't1_mri'
+    vqc_t1_mri = qc_prep / 't1_mri_QC'
     vqc_t1_mri.mkdir(parents=True, exist_ok=True)
 
     id_list = []
@@ -79,10 +79,10 @@ def primary_scans_qc_prep(mapping_dict, visualqc_prep):
         if not primary_link.exists():
             primary_link.symlink_to(primary)
 
-    with open(visualqc_prep / 'id_list_t1.txt', 'w') as f:
+    with open(vqc_t1_mri / 't1_mri_id_list.txt', 'w') as f:
         f.write('\n'.join([str(i) for i in id_list]))
 
-    vqc_t1_mri_cmd = f"visualqc_t1_mri -u {vqc_t1_mri} -i {vqc_t1_mri.parent / 'vqc_t1_id_list.txt'} -m primary.nii.gz"
+    vqc_t1_mri_cmd = f"visualqc_t1_mri -u {vqc_t1_mri} -i {vqc_t1_mri / 't1_mri_id_list.txt'} -m primary.nii.gz"
 
     return vqc_t1_mri_cmd
 
@@ -203,7 +203,7 @@ def summary_to_stdout(vqc_t1_cmd, sess_ct, t1s_found, t1s_not_found, no_anat_dir
 
 def crawl(input_dir, output):
     # make dir for log files and visualqc prep
-    dir_names = ['logs', 'visualqc_prep']
+    dir_names = ['logs', 'QC_prep']
     for dir_name in dir_names:
         output.joinpath(dir_name).mkdir(parents=True, exist_ok=True)
 
@@ -234,8 +234,8 @@ def crawl(input_dir, output):
         f3.write('\n'.join([str(p) for p in no_anat_dirs]))
 
     # write vqc command to file
-    vqc_t1_mri_cmd = primary_scans_qc_prep(mapping_dict, output / 'visualqc_prep')
-    with open(output / 'visualqc_prep' / 't1_mri_qc_cmd', 'w') as f4:
+    vqc_t1_mri_cmd = primary_scans_qc_prep(mapping_dict, output / 'QC_prep')
+    with open(output / 'QC_prep' / 't1_mri_qc_cmd', 'w') as f4:
         f4.write(f"{vqc_t1_mri_cmd}\n")
 
     summary_to_stdout(vqc_t1_mri_cmd, total_sessions, t1s_found, t1s_not_found, no_anat_dirs, output)
