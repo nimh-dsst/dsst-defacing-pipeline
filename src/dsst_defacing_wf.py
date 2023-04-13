@@ -198,11 +198,12 @@ def main():
 
     # prep for visual inspection using visualqc deface
     print(f"Preparing for QC by visual inspection...\n")
-    run_command(f"export DISPLAY=$TMP_DISPLAY;")
+
     vqcdeface_cmd = vqcdeface_prep(input_dir, defacing_outputs)
     print(f"Run the following command to start a VisualQC Deface session:\n\t{vqcdeface_cmd}\n")
     with open(output / 'QC_prep' / 'defacing_qc_cmd', 'w') as f:
         f.write(vqcdeface_cmd + '\n')
+    run_command(f"export DISPLAY=$TMP_DISPLAY;")
 
 
 if __name__ == "__main__":
