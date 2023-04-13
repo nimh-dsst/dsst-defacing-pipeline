@@ -190,7 +190,7 @@ def main():
         f.write('\n'.join(afni_refacer_failures))  # TODO Not very useful when running the pipeline in parallel
 
     # unload fsl module and use fsleyes installed on conda env
-    run_command(f"module unload fsl")
+    run_command(f"TMP_DISPLAY=`echo $DISPLAY`; unset $DISPLAY; module unload fsl")
 
     # reorganizing the directory with defaced images into BIDS tree
     print(f"Reorganizing the directory with defaced images into BIDS tree...\n")
@@ -198,6 +198,7 @@ def main():
 
     # prep for visual inspection using visualqc deface
     print(f"Preparing for QC by visual inspection...\n")
+    run_command(f"export DISPLAY=$TMP_DISPLAY;")
     vqcdeface_cmd = vqcdeface_prep(input_dir, defacing_outputs)
     print(f"Run the following command to start a VisualQC Deface session:\n\t{vqcdeface_cmd}\n")
     with open(output / 'QC_prep' / 'defacing_qc_cmd', 'w') as f:
