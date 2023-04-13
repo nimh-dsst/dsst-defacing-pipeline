@@ -189,6 +189,9 @@ def main():
     with open(output / 'logs' / 'failed_afni_refacer_output.txt', 'w') as f:
         f.write('\n'.join(afni_refacer_failures))  # TODO Not very useful when running the pipeline in parallel
 
+    # unload fsl module and use fsleyes installed on conda env
+    run_command(f"module unload fsl")
+
     # reorganizing the directory with defaced images into BIDS tree
     print(f"Reorganizing the directory with defaced images into BIDS tree...\n")
     reorganize_into_bids(input_dir, defacing_outputs, mapping_dict, no_clean)
