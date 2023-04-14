@@ -176,12 +176,27 @@ def update_mapping_dict(mapping_dict, anat_dir, is_sessions, sidecars, t1_unavai
 
     # updating mapping dict
     if is_sessions:
+        if subjid not in mapping_dict:
+            mapping_dict[subjid] = {}
+
         sessid = anat_dir.parent.name
-        mapping_dict[subjid][sessid]['primary_t1'] = str(primary_t1)
-        mapping_dict[subjid][sessid]['others'] = others
+        if sessid not in mapping_dict[subjid]:
+            mapping_dict[subjid][sessid] = {
+                        'primary_t1': str(primary_t1),
+                        'others': others
+                    }
+
+        else:
+            mapping_dict[subjid][sessid] = {
+                'primary_t1': str(primary_t1),
+                'others': others
+            }
+
     else:
-        mapping_dict[subjid]['primary_t1'] = str(primary_t1)
-        mapping_dict[subjid]['others'] = others
+        mapping_dict[subjid] = {
+                    'primary_t1': str(primary_t1),
+                    'others': others
+                }
 
     return mapping_dict, t1_unavailable, t1_available
 
@@ -210,7 +225,8 @@ def crawl(input_dir, output):
     t1s_found = []
     total_sessions = 0
 
-    mapping_dict = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+    # mapping_dict = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+    mapping_dict = {}
 
     for subj_dir in list(input_dir.glob('sub-*')):
         # subj_id = subj_dir.name

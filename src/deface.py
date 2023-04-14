@@ -1,3 +1,4 @@
+import os
 import subprocess
 from os import fspath
 from pathlib import Path
@@ -113,8 +114,8 @@ def run_afni_refacer(primary_t1, others, subj_input_dir, sess_dir, output_dir):
 def deface_primary_scan(subj_input_dir, sess_dir, mapping_dict, output_dir):
     missing_refacer_outputs = []  # list to capture missing afni refacer workdirs
 
-    subj_id = subj_input_dir.name
-    sess_id = sess_dir.name if sess_dir else None
+    subj_id = os.path.basename(subj_input_dir)
+    sess_id = os.path.basename(sess_dir) if sess_dir else None
 
     if sess_dir:
         primary_t1 = mapping_dict[subj_id][sess_id]['primary_t1']
