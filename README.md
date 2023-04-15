@@ -5,12 +5,17 @@
 The DSST Defacing Pipeline has been developed to make the process of defacing anatomical scans of large datasets, visually inspecting for accuracy and fixing scans that fail visual inspection more efficient and straightforward. The pipeline _requires_ the input dataset to be in BIDS format. A conceptual description of the pipeline can found [here](#conceptual-design).
 
 ## Usage Instructions
+
 ### Clone this repository
+
 ```bash
 git clone git@github.com:nih-fmrif/dsst-defacing-pipeline.git
 ```
+
 ### Run `dsst_defacing_wf.py`
+
 To deface anatomical scans in the dataset, run `dsst_defacing_wf.py` script.
+
 ```
 % python src/dsst_defacing_wf.py -h                                                                                            
 usage: dsst_defacing_wf.py [-h] --input INPUT --output OUTPUT [--participant-id SUBJ_ID] [--session-id SESS_ID] [--no-clean]
@@ -36,6 +41,7 @@ The script can be run serially on a BIDS dataset or in parallel at subject/sessi
 **NOTE:** In the example commands below, <path/to/BIDS/input/dataset> and <path/to/desired/output/directory> are placeholders for paths to input and output directories respectively. 
 
 #### Option 1: Serially
+
 If you have a small dataset with less than 10 subjects, then it might be easiest to run the defacing algorithm serially.
 
 ```bash
@@ -43,6 +49,7 @@ python dsst_defacing_wf.py -i <path/to/BIDS/input/dataset> -o <path/to/desired/o
 ```
 
 #### Option 2: In parallel at subject level
+
 If you have dataset with over 10 subjects, then it might be more practical to run the pipeline in parallel for every subject in the dataset using the `-p/--participant-id` option as follows:
 
 ```bash
@@ -57,14 +64,17 @@ python dsst_defacing_wf.py -i <path/to/BIDS/input/dataset> -o <path/to/desired/d
     echo "python dsst_defacing_wf.py -i <path/to/BIDS/input/dataset> -o <path/to/desired/defacing/output/directory> -s $SUBJ"; \
     done > defacing_parallel_subject_level.swarm
   ```
+
   Purpose: Loop through the dataset and find all subject directories to construct `dsst_defacing_wf.py` command with `-p/--participant-id` option. 
 
   b. Run the swarm file with following command to start a swarm job
+
   ```bash
   swarm -f defacing_parallel_subject_level.swarm --module afni,fsl --merge-output --logdir swarm_log
   ```
 
 #### Option 3: In parallel at session level
+
 If the input dataset has multiple sessions per subject, then run the pipeline on every session in the dataset parallelly. Similar to Option 2, the following commands loop through the dataset to find subject and session IDs to create a `swarm` file to be run on NIH HPC systems.
 
 ```bash
@@ -76,8 +86,11 @@ for i in `ls -d <path/to/BIDS/input/dataset>*`; do
     done;
   done > defacing_parallel_session_level.swarm
 ```
+
+To run the swarm file, once created, use the following command:
+
 ```bash
-swarm -f defacing_parallel_subject_level.swarm --module afni,fsl --merge-output --logdir swarm_log
+swarm -f defacing_parallel_session_level.swarm --module afni,fsl --merge-output --logdir swarm_log
 ```
 
 ### Visually inspect defaced scans using VisualQC
@@ -85,15 +98,16 @@ swarm -f defacing_parallel_subject_level.swarm --module afni,fsl --merge-output 
 Pre-requisite: Install VisualQC from https://raamana.github.io/visualqc/installation.html#stable-release[](https://raamana.github.io/visualqc/installation.html#stable-release)
 
 Once VisualQC is installed, please run the following command to open VisualQC deface GUI to start visually inspecting defaced scans:
+
 ```bash
 sh <path/to/defacing/output/directory>/visualqc_prep/defacing_qc_cmd
 ```
 
 Visual QC defacing accuracy gallery https://raamana.github.io/visualqc/gallery_defacing.html
 
-
 ## Terminology
-While describing the process, we frequently use the following terms: 
+
+While describing the process, we frequently use the following terms:
 
 - **Primary Scan:** The best quality T1w scan within a session. For programmatic selection, we assume that the most
   recently acquired T1w scan is of the best quality.
@@ -104,6 +118,7 @@ While describing the process, we frequently use the following terms:
   Professor at University of Pittsburgh).
 
 ## Conceptual design
+
 1. Generate a ["primary" scans](#terminology) to [other scans'](#terminology) mapping file. 
 2. Deface primary scans
    with [@afni_refacer_run](https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/tutorials/refacer/refacer_run.html) program
