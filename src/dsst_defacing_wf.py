@@ -1,8 +1,6 @@
 import argparse
-import gzip
 import json
 import re
-import shutil
 import subprocess
 from pathlib import Path
 
@@ -58,61 +56,6 @@ def get_sess_dirs(subj_dir_path, mapping_dict):
     return sess_dirs
 
 
-def compress_to_gz(input_file, output_file):
-    if not output_file.exists():
-        with open(input_file, 'rb') as f_input:
-            with gzip.open(output_file, 'wb') as f_output:
-                f_output.writelines(f_input)
-
-
-def copy_over_sidecar(scan_filepath, input_anat_dir, output_anat_dir):
-    prefix = '_'.join([i for i in re.split('_|\.', scan_filepath.name) if i not in ['defaced', 'nii', 'gz']])
-    filename = prefix + '.json'
-    json_sidecar = input_anat_dir / filename
-    shutil.copy2(json_sidecar, output_anat_dir / filename)
-
-
-def reorganize_into_bids(input_dir, defacing_outputs, mapping_dict, no_clean):
-    # make workdir for each session within anat dir
-    for anat_dir in defacing_outputs.rglob('anat'):
-        sess_id = None
-        # extract subject/session IDs
-        subj_id = [i for i in anat_dir.parts if i.startswith('sub-')][0]
-
-        # one anat dir associated with one sess dir, if at all
-        for s in anat_dir.parts:
-            if s.startswith('ses-'):
-                sess_id = s
-
-        primary_t1 = mapping_dict[subj_id][sess_id]['primary_t1'] if sess_id else mapping_dict[subj_id]['primary_t1']
-
-        # iterate over all nii files within an anat dir to rename all primary and "other" scans
-        for nii_filepath in anat_dir.rglob('*nii*'):
-            if nii_filepath.name.startswith('tmp.99.result'):
-                # convert to nii.gz, rename and copy over to anat dir
-                gz_file = anat_dir / Path(primary_t1).name
-                compress_to_gz(nii_filepath, gz_file)
-
-                # copy over corresponding json sidecar
-                copy_over_sidecar(Path(primary_t1), input_dir / anat_dir.relative_to(defacing_outputs), anat_dir)
-
-            elif nii_filepath.name.endswith('_defaced.nii.gz'):
-                new_filename = '_'.join(nii_filepath.name.split('_')[:-1]) + '.nii.gz'
-                shutil.copy2(nii_filepath, str(anat_dir / new_filename))
-
-                copy_over_sidecar(nii_filepath, input_dir / anat_dir.relative_to(defacing_outputs), anat_dir)
-
-        # move QC images and afni intermediate files to a new directory
-        intermediate_files_dir = anat_dir / 'workdir'
-        intermediate_files_dir.mkdir(parents=True, exist_ok=True)
-        for dirpath in anat_dir.glob('*'):
-            if dirpath.name.startswith('workdir') or dirpath.name.endswith('QC'):
-                shutil.move(dirpath, intermediate_files_dir)
-
-        # if not no_clean:
-        #     shutil.rmtree(intermediate_files_dir)
-
-
 def generate_3d_renders(defaced_img, render_outdir):
     rotations = [(45, 5, 10), (-45, 5, 10)]
     for idx, rot in enumerate(rotations):
@@ -121,6 +64,7 @@ def generate_3d_renders(defaced_img, render_outdir):
         fsleyes_render_cmd = f"fsleyes render --scene 3d -rot {yaw} {pitch} {roll} --outfile {outfile} {defaced_img} -dr 20 250 -in spline -bf 0.3 -r 100 -ns 500"
         print(fsleyes_render_cmd)
         run_command(fsleyes_render_cmd)
+        print(f"Has the render been created? {outfile.exists()}")
 
 
 def create_defacing_id_list(qc_dir):
@@ -141,7 +85,7 @@ def vqcdeface_prep(input_dir, defacing_output_dir):
         defaced_link = vqcd_subj_dir / 'defaced.nii.gz'
         if not defaced_link.exists():
             defaced_link.symlink_to(defaced_img)
-            generate_3d_renders(defaced_img, vqcd_subj_dir)
+        generate_3d_renders(defaced_img, vqcd_subj_dir)
 
         img = list(input_dir.rglob(defaced_img.name))[0]
         img_link = vqcd_subj_dir / 'orig.nii.gz'
@@ -182,7 +126,8 @@ def main():
 
     # calling deface.py script
     for subj_sess in subj_sess_list:
-        missing_refacer_out = deface.deface_primary_scan(subj_sess[0], subj_sess[1], mapping_dict, defacing_outputs)
+        missing_refacer_out = deface.deface_primary_scan(input_dir, subj_sess[0], subj_sess[1], mapping_dict,
+                                                         defacing_outputs, no_clean)
         if missing_refacer_out is not None:
             afni_refacer_failures.extend(missing_refacer_out)
 
@@ -191,10 +136,6 @@ def main():
 
     # unload fsl module and use fsleyes installed on conda env
     run_command(f"export TMP_DISPLAY=`echo $DISPLAY`; unset DISPLAY; module unload fsl")
-
-    # reorganizing the directory with defaced images into BIDS tree
-    print(f"Reorganizing the directory with defaced images into BIDS tree...\n")
-    reorganize_into_bids(input_dir, defacing_outputs, mapping_dict, no_clean)
 
     # prep for visual inspection using visualqc deface
     print(f"Preparing for QC by visual inspection...\n")
