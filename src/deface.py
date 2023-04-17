@@ -101,8 +101,8 @@ def reorganize_into_bids(input_bids_dir, subj_dir, sess_dir, primary_t1, defacin
             if dirpath.name.startswith('workdir') or dirpath.name.endswith('QC'):
                 shutil.move(dirpath, intermediate_files_dir)
 
-        # if not no_clean:
-        #     shutil.rmtree(intermediate_files_dir)
+        if not no_clean:
+            shutil.rmtree(intermediate_files_dir)
 
 
 def run_afni_refacer(primary_t1, others, subj_input_dir, sess_dir, output_dir):

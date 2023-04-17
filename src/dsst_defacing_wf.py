@@ -61,7 +61,7 @@ def generate_3d_renders(defaced_img, render_outdir):
     for idx, rot in enumerate(rotations):
         yaw, pitch, roll = rot[0], rot[1], rot[2]
         outfile = render_outdir.joinpath('defaced_render_' + str(idx) + '.png')
-        fsleyes_render_cmd = f"fsleyes render --scene 3d -rot {yaw} {pitch} {roll} --outfile {outfile} {defaced_img} -dr 20 250 -in spline -bf 0.3 -r 100 -ns 500"
+        fsleyes_render_cmd = f"export TMP_DISPLAY=`echo $DISPLAY`; unset DISPLAY; module unload fsl; fsleyes render --scene 3d -rot {yaw} {pitch} {roll} --outfile {outfile} {defaced_img} -dr 20 250 -in spline -bf 0.3 -r 100 -ns 500; export DISPLAY=`echo $TMP_DISPLAY`"
         print(fsleyes_render_cmd)
         run_command(fsleyes_render_cmd)
         print(f"Has the render been created? {outfile.exists()}")
@@ -135,7 +135,7 @@ def main():
         f.write('\n'.join(afni_refacer_failures))  # TODO Not very useful when running the pipeline in parallel
 
     # unload fsl module and use fsleyes installed on conda env
-    run_command(f"export TMP_DISPLAY=`echo $DISPLAY`; unset DISPLAY; module unload fsl")
+    # os.environ['TMP_DISPLAY'] =
 
     # prep for visual inspection using visualqc deface
     print(f"Preparing for QC by visual inspection...\n")
@@ -144,7 +144,6 @@ def main():
     print(f"Run the following command to start a VisualQC Deface session:\n\t{vqcdeface_cmd}\n")
     with open(output / 'QC_prep' / 'defacing_qc_cmd', 'w') as f:
         f.write(vqcdeface_cmd + '\n')
-    run_command(f"export DISPLAY=`echo $TMP_DISPLAY`")
 
 
 if __name__ == "__main__":
