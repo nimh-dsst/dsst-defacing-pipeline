@@ -56,17 +56,6 @@ def get_sess_dirs(subj_dir_path, mapping_dict):
     return sess_dirs
 
 
-def generate_3d_renders(defaced_img, render_outdir):
-    rotations = [(45, 5, 10), (-45, 5, 10)]
-    for idx, rot in enumerate(rotations):
-        yaw, pitch, roll = rot[0], rot[1], rot[2]
-        outfile = render_outdir.joinpath('defaced_render_' + str(idx) + '.png')
-        fsleyes_render_cmd = f"export TMP_DISPLAY=`echo $DISPLAY`; unset DISPLAY; module unload fsl; fsleyes render --scene 3d -rot {yaw} {pitch} {roll} --outfile {outfile} {defaced_img} -dr 20 250 -in spline -bf 0.3 -r 100 -ns 500; export DISPLAY=`echo $TMP_DISPLAY`"
-        print(fsleyes_render_cmd)
-        run_command(fsleyes_render_cmd)
-        print(f"Has the render been created? {outfile.exists()}")
-
-
 def create_defacing_id_list(qc_dir):
     rel_paths_to_orig = [re.sub('/orig.nii.gz', '', str(o.relative_to(qc_dir))) for o in qc_dir.rglob('orig.nii.gz')]
     with open(qc_dir / 'defacing_id_list.txt', 'w') as f:
@@ -85,8 +74,6 @@ def vqcdeface_prep(input_dir, defacing_output_dir):
         defaced_link = vqcd_subj_dir / 'defaced.nii.gz'
         if not defaced_link.exists():
             defaced_link.symlink_to(defaced_img)
-        generate_3d_renders(defaced_img, vqcd_subj_dir)
-
         img = list(input_dir.rglob(defaced_img.name))[0]
         img_link = vqcd_subj_dir / 'orig.nii.gz'
         if not img_link.exists(): img_link.symlink_to(img)
