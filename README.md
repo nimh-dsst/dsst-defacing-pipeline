@@ -2,13 +2,33 @@
 
 # DSST Defacing Pipeline
 
-The DSST Defacing Pipeline has been developed to make the process of defacing anatomical scans of large datasets, visually inspecting for accuracy and fixing scans that fail visual inspection more efficient and straightforward. The pipeline _requires_ the input dataset to be in BIDS format. A conceptual description of the pipeline can found [here](#conceptual-design).
+The DSST Defacing Pipeline has been developed to make the process of defacing anatomical scans of large datasets, visually inspecting for accuracy and fixing scans that fail visual inspection more efficient and straightforward. The pipeline _requires_ the input dataset to be in BIDS format. A conceptual description of the pipeline can found [here](#conceptual-design). 
+
+This pipeline is designed and tested to work on the NIH HPC systems. While it's possible to get the pipeline running on other platforms, please note that it can be error-prone and is not recommended.
 
 ## Usage Instructions
+
 ### Clone this repository
 ```bash
 git clone git@github.com:nih-fmrif/dsst-defacing-pipeline.git
 ```
+### Install required packages 
+Apart from AFNI and FSL packages, available as HPC modules, users will need the following packages in their working environment
+- VisualQC 
+- FSLeyes
+- Python 3.x
+
+There are many ways to create a virtual environment with the required packages, however, we currently only provide instructions to create a conda environment. If you don't already have conda installed, please find instructions [here](https://docs.conda.io/en/latest/miniconda.html). Run the following command to create a conda environment called `dsstdeface` using the `environment.yml` file from this repo. 
+
+```bash
+conda env create -f environment.yml
+```
+ Once conda finishes creating the virtual environment, activate `dsstdeface`.
+ 
+ ```bash
+ conda activate dsstdeface
+ ```
+
 ### Run `dsst_defacing_wf.py`
 To deface anatomical scans in the dataset, run `dsst_defacing_wf.py` script.
 ```
@@ -33,7 +53,7 @@ optional arguments:
 
 The script can be run serially on a BIDS dataset or in parallel at subject/session level. The three methods of running the script have been described below with example commands:  
 
-**NOTE:** In the example commands below, <path/to/BIDS/input/dataset> and <path/to/desired/output/directory> are placeholders for paths to input and output directories respectively. 
+**NOTE:** In the example commands below, `<path/to/BIDS/input/dataset>` and `<path/to/desired/output/directory>` are placeholders for paths to input and output directories, respectively. 
 
 #### Option 1: Serially
 If you have a small dataset with less than 10 subjects, then it might be easiest to run the defacing algorithm serially.
@@ -61,7 +81,7 @@ python dsst_defacing_wf.py -i <path/to/BIDS/input/dataset> -o <path/to/desired/d
 
   b. Run the swarm file with following command to start a swarm job
   ```bash
-  swarm -f defacing_parallel_subject_level.swarm --module afni,fsl --merge-output --logdir swarm_log
+  swarm -f defacing_parallel_subject_level.swarm --merge-output --logdir swarm_log
   ```
 
 #### Option 3: In parallel at session level
@@ -77,20 +97,22 @@ for i in `ls -d <path/to/BIDS/input/dataset>*`; do
   done > defacing_parallel_session_level.swarm
 ```
 ```bash
-swarm -f defacing_parallel_session_level.swarm --module afni,fsl --merge-output --logdir swarm_log
+swarm -f defacing_parallel_session_level.swarm --merge-output --logdir swarm_log
 ```
+
+It takes about 25-30 minutes to finish defacing a single session of scans. 
 
 ### Visually inspect defaced scans using VisualQC
-
-Pre-requisite: Install VisualQC from https://raamana.github.io/visualqc/installation.html#stable-release[](https://raamana.github.io/visualqc/installation.html#stable-release)
-
-Once VisualQC is installed, please run the following command to open VisualQC deface GUI to start visually inspecting defaced scans:
-```bash
-sh <path/to/defacing/output/directory>/visualqc_prep/defacing_qc_cmd
-```
-
-Visual QC defacing accuracy gallery https://raamana.github.io/visualqc/gallery_defacing.html
-
+To visually inspect quality of defacing with visualqc, we'll need to:
+  1. Generate 3D renders for every defaced image in the output directory.
+  ```bash
+  python src/generate_renders.py -o <path/to/desired/defacing/output/directory>
+  ```
+  2. Open TurboVNC through an spersist session. More info [here](https://hpc.nih.gov/docs/nimh.html).
+  3. Run the `vqcdeface` command from a command-line terminal within a TurboVNC instance
+  ```bash
+  sh <path/to/defacing/output/directory>/QC_prep/defacing_qc_cmd
+  ```
 
 ## Terminology
 While describing the process, we frequently use the following terms: 
