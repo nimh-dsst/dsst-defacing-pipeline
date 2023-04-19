@@ -135,35 +135,24 @@ for i in `ls -d ${INPUT_DIR}/*`; do
 swarm -f defacing_parallel_session_level.swarm --merge-output --logdir ${OUTPUT_DIR}/swarm_log
 ```
 
-### Visual Inspection
+### Run `generate_renders.py`
 
-To visually inspect quality of defacing with [VisualQC](https://raamana.github.io/visualqc/readme.html), we'll need to:
-
-1. Generate 3D renders for every defaced image in the output directory.
+Generate 3D renders for every defaced image in the output directory.
 
   ```bash
   python src/generate_renders.py -o ${OUTPUT_DIR}
   ```
 
-2. Open TurboVNC through an spersist session. More info [here](https://hpc.nih.gov/docs/nimh.html).
-3. Run the `vqcdeface` command from a command-line terminal within a TurboVNC instance
+### Visual Inspection
+
+To visually inspect quality of defacing with [VisualQC](https://raamana.github.io/visualqc/readme.html), we'll need to:
+
+1. Open TurboVNC through an spersist session. More info [here](https://hpc.nih.gov/docs/nimh.html).
+2. Run the `vqcdeface` command from a command-line terminal within a TurboVNC instance
 
   ```bash
   sh ${OUTPUT_DIR}/QC_prep/defacing_qc_cmd
   ```
-
-## Terminology
-
-While describing the process, we frequently use the following terms:
-
-- **Primary Scan:** The best quality T1w scan within a session. For programmatic selection, we assume that the most
-  recently acquired T1w scan is of the best quality.
-- **Other/Secondary Scans:** All scans *except* the primary scan are grouped together and referred to as "other" or "
-  secondary" scans for a given session.
-- **Mapping File:** A JSON file that assigns maps a primary scan (or `primary_t1`) to all other scans within a session.
-  Please find an example file [here]().
-- **[VisualQC](https://raamana.github.io/visualqc):** A suite of QC tools developed by Pradeep Raamana (Assistant
-  Professor at University of Pittsburgh).
 
 ## Conceptual design
 
@@ -177,7 +166,20 @@ While describing the process, we frequently use the following terms:
    tool.
 5. Correct/fix defaced scans that failed visual inspection. See [here]() for more info on types of failures.
 
-![Defacing Pipeline flowchart](images/pipeline_screen_quality.png)
+![Defacing Pipeline flowchart](images/defacing_pipeline.png)
+
+## Terminology
+
+While describing the process, we frequently use the following terms:
+
+- **Primary Scan:** The best quality T1w scan within a session. For programmatic selection, we assume that the most
+  recently acquired T1w scan is of the best quality.
+- **Other/Secondary Scans:** All scans *except* the primary scan are grouped together and referred to as "other" or "
+  secondary" scans for a given session.
+- **Mapping File:** A JSON file that assigns maps a primary scan (or `primary_t1`) to all other scans within a session.
+  Please find an example file [here]().
+- **[VisualQC](https://raamana.github.io/visualqc):** A suite of QC tools developed by Pradeep Raamana (Assistant
+  Professor at University of Pittsburgh).
 
 ## References
 
