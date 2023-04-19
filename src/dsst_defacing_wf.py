@@ -77,7 +77,7 @@ def copy_over_sidecar(scan_filepath, input_anat_dir, output_anat_dir):
 
 
 def reorganize_into_bids(input_dir, defacing_outputs, mapping_dict, no_clean):
-    # make afni_intermediate_files for each session within anat dir
+    # make workdir for each session within anat dir
     for anat_dir in defacing_outputs.rglob('anat'):
         sess_id = None
         # extract subject/session IDs
@@ -107,7 +107,7 @@ def reorganize_into_bids(input_dir, defacing_outputs, mapping_dict, no_clean):
                 copy_over_sidecar(nii_filepath, input_dir / anat_dir.relative_to(defacing_outputs), anat_dir)
 
         # move QC images and afni intermediate files to a new directory
-        intermediate_files_dir = anat_dir / 'afni_intermediate_files'
+        intermediate_files_dir = anat_dir / 'workdir'
         intermediate_files_dir.mkdir(parents=True, exist_ok=True)
         for dirpath in anat_dir.glob('*'):
             if dirpath.name.startswith('workdir') or dirpath.name.endswith('QC'):
@@ -137,15 +137,16 @@ def vqcdeface_prep(input_dir, defacing_output_dir):
     defacing_qc_dir = defacing_output_dir.parent / 'QC_prep' / 'defacing_QC'
     defacing_qc_dir.mkdir(parents=True, exist_ok=True)
     interested_files = [f for f in defacing_output_dir.rglob('*.nii.gz') if
-                        'afni_intermediate_files' not in str(f).split('/')]
+                        'workdir' not in str(f).split('/')]
     for defaced_img in interested_files:
         entities = defaced_img.name.split('.')[0].split('_')
         vqcd_subj_dir = defacing_qc_dir / f"{'/'.join(entities)}"
         vqcd_subj_dir.mkdir(parents=True, exist_ok=True)
 
         defaced_link = vqcd_subj_dir / 'defaced.nii.gz'
-        if not defaced_link.exists(): defaced_link.symlink_to(defaced_img)
-        generate_3d_renders(defaced_img, vqcd_subj_dir)
+        if not defaced_link.exists():
+            defaced_link.symlink_to(defaced_img)
+            generate_3d_renders(defaced_img, vqcd_subj_dir)
 
         img = list(input_dir.rglob(defaced_img.name))[0]
         img_link = vqcd_subj_dir / 'orig.nii.gz'
@@ -258,7 +259,7 @@ def main():
     #     f.write('\n'.join(afni_refacer_failures))  # TODO Not very useful when running the pipeline in parallel
 
     # unload fsl module and use fsleyes installed on conda env
-    run_command(f"TMP_DISPLAY=`echo $DISPLAY`; unset $DISPLAY; module unload fsl")
+    run_command(f"export TMP_DISPLAY=`echo $DISPLAY`; unset DISPLAY; module unload fsl")
 
     # reorganizing the directory with defaced images into BIDS tree
     print(f"Reorganizing the directory with defaced images into BIDS tree...\n")

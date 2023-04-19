@@ -10,3 +10,4 @@ examples/visualqc_prep/
 examples/sub-01/
 user-testing/*
 
+src/isolate_fsleyes_render_issue.py

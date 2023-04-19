@@ -77,7 +77,10 @@ def primary_scans_qc_prep(mapping_dict, qc_prep):
         id_list.append(dest)
         primary_link = dest / 'primary.nii.gz'
         if not primary_link.exists():
-            primary_link.symlink_to(primary)
+            try:
+                primary_link.symlink_to(primary)
+            except:
+                pass
 
     with open(vqc_t1_mri / 't1_mri_id_list.txt', 'w') as f:
         f.write('\n'.join([str(i) for i in id_list]))
