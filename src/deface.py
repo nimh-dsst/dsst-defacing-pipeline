@@ -176,14 +176,15 @@ def deface_primary_scan(input_bids_dir, subj_input_dir, sess_dir, mapping_dict, 
         primary_t1 = mapping_dict[subj_id][sess_id]['primary_t1']
         others = [str(s) for s in mapping_dict[subj_id][sess_id]['others'] if s != primary_t1]
         missing_refacer_outputs.append(run_afni_refacer(primary_t1, others, subj_input_dir, sess_dir, output_dir))
+        print(f"Reorganizing {sess_dir} with defaced images into BIDS tree...\n")
 
     else:
         primary_t1 = mapping_dict[subj_id]['primary_t1']
         others = [str(s) for s in mapping_dict[subj_id]['others'] if s != primary_t1]
         missing_refacer_outputs.append(run_afni_refacer(primary_t1, others, subj_input_dir, "", output_dir))
+        print(f"Reorganizing {subj_input_dir} with defaced images into BIDS tree...\n")
 
     # reorganizing the directory with defaced images into BIDS tree
-    print(f"Reorganizing {sess_dir} with defaced images into BIDS tree...\n")
     reorganize_into_bids(input_bids_dir, subj_input_dir, sess_dir, primary_t1, output_dir, no_clean)
 
     return missing_refacer_outputs

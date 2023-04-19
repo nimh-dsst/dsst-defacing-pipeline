@@ -9,5 +9,6 @@ scripts_outputs/
 examples/visualqc_prep/
 examples/sub-01/
 user-testing/*
-
+lookup.json
+rename.py
 src/isolate_fsleyes_render_issue.py

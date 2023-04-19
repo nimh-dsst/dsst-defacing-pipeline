@@ -129,6 +129,7 @@ def main():
 
     # running processing style
     if args.n_cpus == 1:
+        print('Defacing in Serial, one at a time')
         for defaceable in to_deface:
             subj_sess = defaceable.split(os.sep)[-2:]
 
@@ -157,6 +158,7 @@ def main():
                 afni_refacer_failures.extend(missing_refacer_out)
 
     elif args.n_cpus > 1:
+        print(f'Defacing in Parallel with {args.n_cpus} cores')
         # initialize pool
         with Pool(processes=args.n_cpus) as p:
 
@@ -177,6 +179,7 @@ def main():
                 else:
                     session_list.append(None)
 
+            # parallel processing
             missing_refacer_outs = p.starmap(deface.deface_primary_scan,
                         zip(
                             [input_dir]*len(subject_list),
@@ -185,7 +188,7 @@ def main():
                             [mapping_dict]*len(subject_list),
                             [defacing_outputs]*len(subject_list),
                             [no_clean]*len(subject_list)
-                        ), chunksize=args.n_cpus)
+                        ))
 
         # collect failures
         for missing_refacer_out in missing_refacer_outs:

@@ -104,9 +104,11 @@ def sort_by_acq_time(sidecars):
             for field in acq_time_field_vars:
                 if field in data.keys():
                     acq_time_dict[sidecar] = data[field]
-    acq_time_sorted_list = sorted(acq_time_dict.items(), key=lambda key_val_tup: key_val_tup[1], reverse=True)
+    acq_time_sorted_dict_list = sorted(acq_time_dict.items(), key=lambda key_val_tup: key_val_tup[1], reverse=True)
 
-    if acq_time_sorted_list == []:
+    if acq_time_sorted_dict_list != []:
+        acq_time_sorted_list = [tup[0] for tup in acq_time_sorted_dict_list]
+    else:
         newline_sidecars = '\n'.join(
             [str(s) for s in sidecars])  # need this since f-string expression part cannot include a backslash
         print(
