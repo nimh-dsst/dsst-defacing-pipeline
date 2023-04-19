@@ -2,15 +2,23 @@
 
 # DSST Defacing Pipeline
 
-The DSST Defacing Pipeline has been developed to make the process of defacing anatomical scans of large datasets, visually inspecting for accuracy and fixing scans that fail visual inspection more efficient and straightforward. The pipeline _requires_ the input dataset to be in BIDS format. A conceptual description of the pipeline can found [here](#conceptual-design).
+The DSST Defacing Pipeline has been developed to make the process of defacing anatomical scans of large datasets,
+visually inspecting for accuracy and fixing scans that fail visual inspection more efficient and straightforward. The
+pipeline _requires_ the input dataset to be in BIDS format. A conceptual description of the pipeline can
+found [here](#conceptual-design).
 
 ## Usage Instructions
+
 ### Clone this repository
+
 ```bash
 git clone git@github.com:nih-fmrif/dsst-defacing-pipeline.git
 ```
+
 ### Run `dsst_defacing_wf.py`
+
 To deface anatomical scans in the dataset, run `dsst_defacing_wf.py` script.
+
 ```
 % python src/dsst_defacing_wf.py -h                                                                                            
 usage: dsst_defacing_wf.py [-h] --input INPUT --output OUTPUT [--participant-id SUBJ_ID] [--session-id SESS_ID] [--no-clean]
@@ -31,85 +39,112 @@ optional arguments:
 
 ```
 
-The script can be run serially on a BIDS dataset or in parallel at subject/session level. The three methods of running the script have been described below with example commands:  
+The script can be run serially on a BIDS dataset or in parallel at subject/session level. The three methods of running
+the script have been described below with example commands:
 
-**NOTE:** In the example commands below, <path/to/BIDS/input/dataset> and <path/to/desired/output/directory> are placeholders for paths to input and output directories respectively. 
+For readability of example commands, the following bash variables have defined as follows:
+
+```bash
+INPUT_DIR="<path/to/BIDS/input/dataset>"
+OUTPUT_DIR="<path/to/desired/defacing/output/directory>"
+```
+
+**NOTE:** In the example commands below, <path/to/BIDS/input/dataset> and <path/to/desired/output/directory> are
+placeholders for paths to input and output directories respectively.
 
 #### Option 1: Serially
+
 If you have a small dataset with less than 10 subjects, then it might be easiest to run the defacing algorithm serially.
 
 ```bash
-python dsst_defacing_wf.py -i <path/to/BIDS/input/dataset> -o <path/to/desired/output/directory>
+python dsst_defacing_wf.py -i $INPUT_DIR -o $OUTPUT_DIR
 ```
 
 #### Option 2: In parallel at subject level
-If you have dataset with over 10 subjects, then it might be more practical to run the pipeline in parallel for every subject in the dataset using the `-p/--participant-id` option as follows:
+
+If you have dataset with over 10 subjects, then it might be more practical to run the pipeline in parallel for every
+subject in the dataset using the `-p/--participant-id` option as follows:
 
 ```bash
-python dsst_defacing_wf.py -i <path/to/BIDS/input/dataset> -o <path/to/desired/defacing/output/directory> -p sub-<index>
+python dsst_defacing_wf.py -i ${INPUT_DIR} -o ${OUTPUT_DIR} -p sub-<index>
 ```
 
-  a. Assuming these scripts are run on the NIH HPC system, the first step would be to create a `swarm` file:
+a. Assuming these scripts are run on the NIH HPC system, the first step would be to create a `swarm` file:
 
   ```bash
-  for i in `ls -d <path/to/BIDS/input/dataset>*`; do \
-    SUBJ=$(echo $i | sed 's|<path/to/BIDS/input/dataset>||g' ); \
-    echo "python dsst_defacing_wf.py -i <path/to/BIDS/input/dataset> -o <path/to/desired/defacing/output/directory> -s $SUBJ"; \
+  
+  for i in `ls -d ${INPUT_DIR}/*`; do \
+    SUBJ=$(echo $i | sed "s|${INPUT_DIR}/||g" ); \
+    echo "python src/dsst_defacing_wf.py -i ${INPUT_DIR} -o ${OUTPUT_DIR} -s ${SUBJ}"; \
     done > defacing_parallel_subject_level.swarm
   ```
-  Purpose: Loop through the dataset and find all subject directories to construct `dsst_defacing_wf.py` command with `-p/--participant-id` option. 
 
-  b. Run the swarm file with following command to start a swarm job
+Purpose: Loop through the dataset and find all subject directories to construct `dsst_defacing_wf.py` command
+with `-p/--participant-id` option.
+
+b. Run the swarm file with following command to start a swarm job
+
   ```bash
-  swarm -f defacing_parallel_subject_level.swarm --module afni,fsl --merge-output --logdir swarm_log
+  swarm -f defacing_parallel_subject_level.swarm --merge-output --logdir ${OUTPUT_DIR}/swarm_log
   ```
 
 #### Option 3: In parallel at session level
-If the input dataset has multiple sessions per subject, then run the pipeline on every session in the dataset parallelly. Similar to Option 2, the following commands loop through the dataset to find subject and session IDs to create a `swarm` file to be run on NIH HPC systems.
+
+If the input dataset has multiple sessions per subject, then run the pipeline on every session in the dataset
+parallelly. Similar to Option 2, the following commands loop through the dataset to find subject and session IDs to
+create a `swarm` file to be run on NIH HPC systems.
 
 ```bash
-for i in `ls -d <path/to/BIDS/input/dataset>*`; do
-  SUBJ=$(echo $i | sed "s|<path/to/BIDS/input/dataset>/||g" );
-  for j in `ls -d <path/to/BIDS/input/dataset>/${SUBJ}/*`; do
-    SESS=$(echo $j | sed "s|<path/to/BIDS/input/dataset>/${SUBJ}/||g" )
-    echo "python dsst_defacing_wf.py -i <path/to/BIDS/input/dataset> -o <path/to/desired/defacing/output/directory> -p ${SUBJ} -s ${SESS}";
+for i in `ls -d ${INPUT_DIR}/*`; do
+  SUBJ=$(echo $i | sed "s|${INPUT_DIR}/||g" );
+  for j in `ls -d ${INPUT_DIR}/${SUBJ}/*`; do
+    SESS=$(echo $j | sed "s|${INPUT_DIR}/${SUBJ}/||g" )
+    echo "python src/dsst_defacing_wf.py -i ${INPUT_DIR} -o ${OUTPUT_DIR} -p ${SUBJ} -s ${SESS}";
     done;
   done > defacing_parallel_session_level.swarm
 ```
+
 ```bash
-swarm -f defacing_parallel_session_level.swarm --module afni,fsl --merge-output --logdir swarm_log
+swarm -f defacing_parallel_session_level.swarm --merge-output --logdir ${OUTPUT_DIR}/swarm_log
 ```
 
 ### Visually inspect defaced scans using VisualQC
 
-Pre-requisite: Install VisualQC from https://raamana.github.io/visualqc/installation.html#stable-release[](https://raamana.github.io/visualqc/installation.html#stable-release)
+Pre-requisite: Install VisualQC
+from https://raamana.github.io/visualqc/installation.html#stable-release[](https://raamana.github.io/visualqc/installation.html#stable-release)
 
-Once VisualQC is installed, please run the following command to open VisualQC deface GUI to start visually inspecting defaced scans:
+Once VisualQC is installed, please run the following command to open VisualQC deface GUI to start visually inspecting
+defaced scans:
+
 ```bash
 sh <path/to/defacing/output/directory>/visualqc_prep/defacing_qc_cmd
 ```
 
 Visual QC defacing accuracy gallery https://raamana.github.io/visualqc/gallery_defacing.html
 
-
 ## Terminology
-While describing the process, we frequently use the following terms: 
+
+While describing the process, we frequently use the following terms:
 
 - **Primary Scan:** The best quality T1w scan within a session. For programmatic selection, we assume that the most
   recently acquired T1w scan is of the best quality.
 - **Other/Secondary Scans:** All scans *except* the primary scan are grouped together and referred to as "other" or "
   secondary" scans for a given session.
-- **Mapping File:** A JSON file that assigns maps a primary scan (or `primary_t1`) to all other scans within a session. Please find an example file [here]().
+- **Mapping File:** A JSON file that assigns maps a primary scan (or `primary_t1`) to all other scans within a session.
+  Please find an example file [here]().
 - **[VisualQC](https://raamana.github.io/visualqc):** A suite of QC tools developed by Pradeep Raamana (Assistant
   Professor at University of Pittsburgh).
 
 ## Conceptual design
-1. Generate a ["primary" scans](#terminology) to [other scans'](#terminology) mapping file. 
+
+1. Generate a ["primary" scans](#terminology) to [other scans'](#terminology) mapping file.
 2. Deface primary scans
    with [@afni_refacer_run](https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/tutorials/refacer/refacer_run.html) program
-   developed by the AFNI Team. 
-3. To deface remaining scans in the session, register them to the primary scan (using FSL `flirt` command) and then use the primary scan's defacemask to generate a defaced image (using `fslmaths` command).
-4. Visually inspect defaced scans with [VisualQC](https://raamana.github.io/visualqc) deface tool or any other preferred tool.
+   developed by the AFNI Team.
+3. To deface remaining scans in the session, register them to the primary scan (using FSL `flirt` command) and then use
+   the primary scan's defacemask to generate a defaced image (using `fslmaths` command).
+4. Visually inspect defaced scans with [VisualQC](https://raamana.github.io/visualqc) deface tool or any other preferred
+   tool.
 5. Correct/fix defaced scans that failed visual inspection. See [here]() for more info on types of failures.
 
 ![Defacing Pipeline flowchart](images/pipeline_screen_quality.png)
@@ -120,7 +155,8 @@ While describing the process, we frequently use the following terms:
    BN, Milev R, Müller DJ, Kennedy SH, Scott CJM, Strother SC, and Arnott SR (2021)
    [Multisite Comparison of MRI Defacing Software Across Multiple Cohorts](10.3389/fpsyt.2021.617997). Front. Psychiatry
    12:617997. doi:10.3389/fpsyt.2021.617997
-2. `@afni_refacer_run` is the defacing tool used under the hood. [AFNI Refacer program](https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/tutorials/refacer/refacer_run.html).
+2. `@afni_refacer_run` is the defacing tool used under the
+   hood. [AFNI Refacer program](https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/tutorials/refacer/refacer_run.html).
 3. FSL's [FLIRT](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FLIRT)
    and [`fslmaths`](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils?highlight=%28fslmaths%29) programs have been used
    for registration and masking steps in the workflow.

@@ -76,7 +76,7 @@ def primary_scans_qc_prep(mapping_dict, qc_prep):
 
         id_list.append(dest)
         primary_link = dest / 'primary.nii.gz'
-        if not primary_link.exists():
+        if not primary_link.is_symlink():
             try:
                 primary_link.symlink_to(primary)
             except:
