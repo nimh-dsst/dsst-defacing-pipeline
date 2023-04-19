@@ -135,21 +135,21 @@ for i in `ls -d ${INPUT_DIR}/*`; do
 swarm -f defacing_parallel_session_level.swarm --merge-output --logdir ${OUTPUT_DIR}/swarm_log
 ```
 
-### Visually inspect defaced scans using VisualQC
+### Visual Inspection
 
-To visually inspect quality of defacing with visualqc, we'll need to:
+To visually inspect quality of defacing with [VisualQC](https://raamana.github.io/visualqc/readme.html), we'll need to:
 
 1. Generate 3D renders for every defaced image in the output directory.
 
   ```bash
-  python src/generate_renders.py -o <path/to/desired/defacing/output/directory>
+  python src/generate_renders.py -o ${OUTPUT_DIR}
   ```
 
 2. Open TurboVNC through an spersist session. More info [here](https://hpc.nih.gov/docs/nimh.html).
 3. Run the `vqcdeface` command from a command-line terminal within a TurboVNC instance
 
   ```bash
-  sh <path/to/defacing/output/directory>/QC_prep/defacing_qc_cmd
+  sh ${OUTPUT_DIR}/QC_prep/defacing_qc_cmd
   ```
 
 ## Terminology
