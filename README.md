@@ -2,10 +2,20 @@
 
 # DSST Defacing Pipeline
 
+<<<<<<< HEAD
 The DSST Defacing Pipeline has been developed to make the process of defacing anatomical scans of large datasets,
 visually inspecting for accuracy and fixing scans that fail visual inspection more efficient and straightforward. The
 pipeline _requires_ the input dataset to be in BIDS format. A conceptual description of the pipeline can
 found [here](#conceptual-design).
+=======
+The DSST Defacing Pipeline has been developed to make the process of defacing anatomical scans of large datasets,
+visually inspecting for accuracy and fixing scans that fail visual inspection more efficient and straightforward. The
+pipeline _requires_ the input dataset to be in BIDS format. A conceptual description of the pipeline can
+found [here](#conceptual-design).
+
+This pipeline is designed and tested to work on the NIH HPC systems. While it's possible to get the pipeline running on
+other platforms, please note that it can be error-prone and is not recommended.
+> > > > > > > 8dc705ab68bf38be986c6f33b50d80af46af7beb
 
 ## Usage Instructions
 
@@ -14,6 +24,35 @@ found [here](#conceptual-design).
 ```bash
 git clone git@github.com:nih-fmrif/dsst-defacing-pipeline.git
 ```
+
+<<<<<<< HEAD
+=======
+
+### Install required packages
+
+Apart from AFNI and FSL packages, available as HPC modules, users will need the following packages in their working
+environment
+
+- VisualQC
+- FSLeyes
+- Python 3.x
+
+There are many ways to create a virtual environment with the required packages, however, we currently only provide
+instructions to create a conda environment. If you don't already have conda installed, please find
+instructions [here](https://docs.conda.io/en/latest/miniconda.html). Run the following command to create a conda
+environment called `dsstdeface` using the `environment.yml` file from this repo.
+
+```bash
+conda env create -f environment.yml
+```
+
+Once conda finishes creating the virtual environment, activate `dsstdeface`.
+
+ ```bash
+ conda activate dsstdeface
+ ```
+
+> > > > > > > 8dc705ab68bf38be986c6f33b50d80af46af7beb
 
 ### Run `dsst_defacing_wf.py`
 
@@ -42,6 +81,7 @@ optional arguments:
 The script can be run serially on a BIDS dataset or in parallel at subject/session level. The three methods of running
 the script have been described below with example commands:
 
+<<<<<<< HEAD
 For readability of example commands, the following bash variables have defined as follows:
 
 ```bash
@@ -51,6 +91,10 @@ OUTPUT_DIR="<path/to/desired/defacing/output/directory>"
 
 **NOTE:** In the example commands below, <path/to/BIDS/input/dataset> and <path/to/desired/output/directory> are
 placeholders for paths to input and output directories respectively.
+=======
+**NOTE:** In the example commands below, `<path/to/BIDS/input/dataset>` and `<path/to/desired/output/directory>` are
+placeholders for paths to input and output directories, respectively.
+> > > > > > > 8dc705ab68bf38be986c6f33b50d80af46af7beb
 
 #### Option 1: Serially
 
@@ -110,17 +154,20 @@ swarm -f defacing_parallel_session_level.swarm --merge-output --logdir ${OUTPUT_
 
 ### Visually inspect defaced scans using VisualQC
 
-Pre-requisite: Install VisualQC
-from https://raamana.github.io/visualqc/installation.html#stable-release[](https://raamana.github.io/visualqc/installation.html#stable-release)
+To visually inspect quality of defacing with visualqc, we'll need to:
 
-Once VisualQC is installed, please run the following command to open VisualQC deface GUI to start visually inspecting
-defaced scans:
+1. Generate 3D renders for every defaced image in the output directory.
 
-```bash
-sh <path/to/defacing/output/directory>/visualqc_prep/defacing_qc_cmd
-```
+  ```bash
+  python src/generate_renders.py -o <path/to/desired/defacing/output/directory>
+  ```
 
-Visual QC defacing accuracy gallery https://raamana.github.io/visualqc/gallery_defacing.html
+2. Open TurboVNC through an spersist session. More info [here](https://hpc.nih.gov/docs/nimh.html).
+3. Run the `vqcdeface` command from a command-line terminal within a TurboVNC instance
+
+  ```bash
+  sh <path/to/defacing/output/directory>/QC_prep/defacing_qc_cmd
+  ```
 
 ## Terminology
 
