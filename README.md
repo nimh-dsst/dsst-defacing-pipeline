@@ -2,12 +2,6 @@
 
 # DSST Defacing Pipeline
 
-<<<<<<< HEAD
-The DSST Defacing Pipeline has been developed to make the process of defacing anatomical scans of large datasets,
-visually inspecting for accuracy and fixing scans that fail visual inspection more efficient and straightforward. The
-pipeline _requires_ the input dataset to be in BIDS format. A conceptual description of the pipeline can
-found [here](#conceptual-design).
-=======
 The DSST Defacing Pipeline has been developed to make the process of defacing anatomical scans of large datasets,
 visually inspecting for accuracy and fixing scans that fail visual inspection more efficient and straightforward. The
 pipeline _requires_ the input dataset to be in BIDS format. A conceptual description of the pipeline can
@@ -15,7 +9,6 @@ found [here](#conceptual-design).
 
 This pipeline is designed and tested to work on the NIH HPC systems. While it's possible to get the pipeline running on
 other platforms, please note that it can be error-prone and is not recommended.
-> > > > > > > 8dc705ab68bf38be986c6f33b50d80af46af7beb
 
 ## Usage Instructions
 
@@ -24,9 +17,6 @@ other platforms, please note that it can be error-prone and is not recommended.
 ```bash
 git clone git@github.com:nih-fmrif/dsst-defacing-pipeline.git
 ```
-
-<<<<<<< HEAD
-=======
 
 ### Install required packages
 
@@ -51,8 +41,6 @@ Once conda finishes creating the virtual environment, activate `dsstdeface`.
  ```bash
  conda activate dsstdeface
  ```
-
-> > > > > > > 8dc705ab68bf38be986c6f33b50d80af46af7beb
 
 ### Run `dsst_defacing_wf.py`
 
@@ -81,7 +69,6 @@ optional arguments:
 The script can be run serially on a BIDS dataset or in parallel at subject/session level. The three methods of running
 the script have been described below with example commands:
 
-<<<<<<< HEAD
 For readability of example commands, the following bash variables have defined as follows:
 
 ```bash
@@ -89,19 +76,15 @@ INPUT_DIR="<path/to/BIDS/input/dataset>"
 OUTPUT_DIR="<path/to/desired/defacing/output/directory>"
 ```
 
-**NOTE:** In the example commands below, <path/to/BIDS/input/dataset> and <path/to/desired/output/directory> are
-placeholders for paths to input and output directories respectively.
-=======
 **NOTE:** In the example commands below, `<path/to/BIDS/input/dataset>` and `<path/to/desired/output/directory>` are
 placeholders for paths to input and output directories, respectively.
-> > > > > > > 8dc705ab68bf38be986c6f33b50d80af46af7beb
 
 #### Option 1: Serially
 
 If you have a small dataset with less than 10 subjects, then it might be easiest to run the defacing algorithm serially.
 
 ```bash
-python dsst_defacing_wf.py -i $INPUT_DIR -o $OUTPUT_DIR
+python dsst_defacing_wf.py -i ${INPUT_DIR} -o ${OUTPUT_DIR}
 ```
 
 #### Option 2: In parallel at subject level
