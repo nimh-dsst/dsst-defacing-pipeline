@@ -100,7 +100,7 @@ def reorganize_into_bids(input_bids_dir, subj_dir, sess_dir, primary_t1, defacin
         intermediate_files_dir.mkdir(parents=True, exist_ok=True)
         for dirpath in anat_dir.glob('*'):
             if dirpath.name.startswith('workdir') or dirpath.name.endswith('QC'):
-                shutil.move(dirpath, intermediate_files_dir)
+                shutil.move(dirpath.absolute(), intermediate_files_dir.absolute())
 
         if not no_clean:
             shutil.rmtree(intermediate_files_dir)
@@ -132,7 +132,7 @@ def run_afni_refacer(primary_t1, others, subj_input_dir, sess_dir, output_dir):
         refacer_cmd = f"@afni_refacer_run -input {primary_t1} -mode_deface -no_clean -prefix {fspath(subj_outdir / prefix)}"
 
         # TODO remove module load afni
-        full_cmd = f"module load afni ; {refacer_cmd}"
+        full_cmd = f"module load afni ; export OMP_NUM_THREADS=1 ; {refacer_cmd}"
 
         # TODO make log text less ugly; perhaps in a separate function
         log_filename = subj_outdir / 'defacing_pipeline.log'
