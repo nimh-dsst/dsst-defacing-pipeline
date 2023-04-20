@@ -7,6 +7,7 @@ import argparse
 import re
 import subprocess
 from pathlib import Path
+from multiprocessing.pool import Pool
 
 
 def get_args():
@@ -14,6 +15,9 @@ def get_args():
 
     parser.add_argument('-o', '--output', type=Path, action='store', dest='outdir', metavar='OUTPUT_DIR',
                         default=Path('.'), help="Path to defacing outputs directory.")
+    parser.add_argument('-n', '--n-cpus', type=int, default=1,
+                        help='Number of parallel processes to run. '
+                        'Defaults to 1, meaning "serial processing" when not provided.')
     return parser.parse_args()
 
 
@@ -50,8 +54,21 @@ def generate_3d_renders(defaced_img, render_outdir):
 def main():
     args = get_args()
     defaced_imgs = list(args.outdir.rglob('defaced.nii.gz'))
-    for img in defaced_imgs:
-        generate_3d_renders(img, img.parent)
+
+    if args.n_cpus == 1:
+        print(f'Running in Serial, one render at a time')
+        for img in defaced_imgs:
+            generate_3d_renders(img, img.parent)
+
+    elif args.n_cpus > 1:
+        print(f'Running in Parallel with {args.n_cpus} cores')
+        # initialize pool
+        with Pool(processes=args.n_cpus) as p:
+            p.starmap(  generate_3d_renders, zip( defaced_imgs,
+                        [img.parent for img in defaced_imgs] )  )
+
+    else:
+        raise ValueError(f"Provided --n-cpus of {args.n_cpus} is not a valid number of CPUs.")
 
     # prep for visual inspection using visualqc deface
     print(f"Preparing for QC by visual inspection...\n")
