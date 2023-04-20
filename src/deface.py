@@ -100,7 +100,7 @@ def reorganize_into_bids(input_bids_dir, subj_dir, sess_dir, primary_t1, defacin
         intermediate_files_dir.mkdir(parents=True, exist_ok=True)
         for dirpath in anat_dir.glob('*'):
             if dirpath.name.startswith('workdir') or dirpath.name.endswith('QC'):
-                dirpath.rename(intermediate_files_dir)
+                shutil.move(str(dirpath), str(intermediate_files_dir))
 
         if not no_clean:
             shutil.rmtree(intermediate_files_dir)
