@@ -60,36 +60,6 @@ def get_sess_dirs(subj_dir_path, mapping_dict):
     return sess_dirs
 
 
-def create_defacing_id_list(qc_dir):
-    rel_paths_to_orig = [re.sub('/orig.nii.gz', '', str(o.relative_to(qc_dir))) for o in qc_dir.rglob('orig.nii.gz')]
-    with open(qc_dir / 'defacing_id_list.txt', 'w') as f:
-        f.write('\n'.join(rel_paths_to_orig))
-
-
-def vqcdeface_prep(input_dir, defacing_output_dir):
-    defacing_qc_dir = defacing_output_dir.parent / 'QC_prep' / 'defacing_QC'
-    defacing_qc_dir.mkdir(parents=True, exist_ok=True)
-    interested_files = [f for f in defacing_output_dir.rglob('*.nii.gz') if
-                        'workdir' not in str(f).split('/')]
-    for defaced_img in interested_files:
-        entities = defaced_img.name.split('.')[0].split('_')
-        vqcd_subj_dir = defacing_qc_dir / f"{'/'.join(entities)}"
-        vqcd_subj_dir.mkdir(parents=True, exist_ok=True)
-
-        defaced_link = vqcd_subj_dir / 'defaced.nii.gz'
-        if not defaced_link.exists():
-            defaced_link.symlink_to(defaced_img)
-        img = list(input_dir.rglob(defaced_img.name))[0]
-        img_link = vqcd_subj_dir / 'orig.nii.gz'
-        if not img_link.exists(): img_link.symlink_to(img)
-
-    create_defacing_id_list(defacing_qc_dir)
-
-    vqcdeface_cmd = f"vqcdeface -u {defacing_qc_dir} -i {defacing_qc_dir / 'defacing_id_list.txt'} -m orig.nii.gz -d defaced.nii.gz -r defaced_render"
-
-    return vqcdeface_cmd
-
-
 def main():
     # get command line arguments
     args = get_args()
@@ -122,8 +92,8 @@ def main():
     mapping_dict = generate_mappings.crawl(input_dir, output)
 
     # create a separate bids tree with only defaced scans
-    defacing_outputs = output / 'bids_defaced'
-    defacing_outputs.mkdir(parents=True, exist_ok=True)
+    bids_defaced_outdir = output / 'bids_defaced'
+    bids_defaced_outdir.mkdir(parents=True, exist_ok=True)
 
     afni_refacer_failures = []  # list to capture afni_refacer_run failures
 
@@ -186,7 +156,7 @@ def main():
                             subject_list,
                             session_list,
                             [mapping_dict]*len(subject_list),
-                            [defacing_outputs]*len(subject_list),
+                            [bids_defaced_outdir]*len(subject_list),
                             [no_clean]*len(subject_list)
                         ))
 
@@ -197,21 +167,6 @@ def main():
 
     else:
         raise ValueError("Invalid processing type. Must be either 'serial' or 'parallel'.")
-
-    # with open(output / 'logs' / 'failed_afni_refacer_output.txt', 'w') as f:
-    #     f.write('\n'.join(afni_refacer_failures))  # TODO Not very useful when running the pipeline in parallel
-
-    # unload fsl module and use fsleyes installed on conda env
-    # os.environ['TMP_DISPLAY'] =
-
-    # prep for visual inspection using visualqc deface
-    print(f"Preparing for QC by visual inspection...\n")
-
-    vqcdeface_cmd = vqcdeface_prep(input_dir, defacing_outputs)
-    print(f"Run the following command to start a VisualQC Deface session:\n\t{vqcdeface_cmd}\n")
-    with open(output / 'QC_prep' / 'defacing_qc_cmd', 'w') as f:
-        f.write(vqcdeface_cmd + '\n')
-
 
 if __name__ == "__main__":
     main()

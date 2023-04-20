@@ -69,14 +69,33 @@ def copy_over_sidecar(scan_filepath, input_anat_dir, output_anat_dir):
     shutil.copy2(json_sidecar, output_anat_dir / filename)
 
 
-def reorganize_into_bids(input_bids_dir, subj_dir, sess_dir, primary_t1, defacing_outdir, no_clean):
+def vqcdeface_prep(bids_input_dir, defaced_anat_dir, bids_defaced_outdir):
+    defacing_qc_dir = bids_defaced_outdir.parent / 'QC_prep' / 'defacing_QC'
+    interested_files = [f for f in defaced_anat_dir.rglob('*.nii.gz') if
+                        'work_dir' not in str(f).split('/')]
+    print(interested_files)
+    for defaced_img in interested_files:
+        entities = defaced_img.name.split('.')[0].split('_')
+        vqcd_subj_dir = defacing_qc_dir / f"{'/'.join(entities)}"
+        vqcd_subj_dir.mkdir(parents=True, exist_ok=True)
+
+        defaced_link = vqcd_subj_dir / 'defaced.nii.gz'
+        if not defaced_link.is_symlink():
+            defaced_link.symlink_to(defaced_img)
+        print(list(bids_input_dir.rglob(defaced_img.name)))
+        img = list(bids_input_dir.rglob(defaced_img.name))[0]
+        img_link = vqcd_subj_dir / 'orig.nii.gz'
+        if not img_link.is_symlink(): img_link.symlink_to(img)
+
+
+def reorganize_into_bids(input_bids_dir, subj_dir, sess_dir, primary_t1, bids_defaced_outdir, no_clean):
     subj_id = subj_dir.name
     sess_id = sess_dir.name if sess_dir else None
 
     if sess_id:
-        anat_dirs = list(defacing_outdir.joinpath(subj_id, sess_id).rglob('anat'))
+        anat_dirs = list(bids_defaced_outdir.joinpath(subj_id, sess_id).rglob('anat'))
     else:
-        anat_dirs = list(defacing_outdir.joinpath(subj_id).rglob('anat'))
+        anat_dirs = list(bids_defaced_outdir.joinpath(subj_id).rglob('anat'))
     # make workdir for each session within anat dir
     for anat_dir in anat_dirs:
         # iterate over all nii files within an anat dir to rename all primary and "other" scans
@@ -87,20 +106,23 @@ def reorganize_into_bids(input_bids_dir, subj_dir, sess_dir, primary_t1, defacin
                 compress_to_gz(nii_filepath, gz_file)
 
                 # copy over corresponding json sidecar
-                copy_over_sidecar(Path(primary_t1), input_bids_dir / anat_dir.relative_to(defacing_outdir), anat_dir)
+                copy_over_sidecar(Path(primary_t1), input_bids_dir / anat_dir.relative_to(bids_defaced_outdir),
+                                  anat_dir)
 
             elif nii_filepath.name.endswith('_defaced.nii.gz'):
                 new_filename = '_'.join(nii_filepath.name.split('_')[:-1]) + '.nii.gz'
                 shutil.copy2(nii_filepath, str(anat_dir / new_filename))
 
-                copy_over_sidecar(nii_filepath, input_bids_dir / anat_dir.relative_to(defacing_outdir), anat_dir)
+                copy_over_sidecar(nii_filepath, input_bids_dir / anat_dir.relative_to(bids_defaced_outdir), anat_dir)
 
         # move QC images and afni intermediate files to a new directory
-        intermediate_files_dir = anat_dir / 'workdir'
+        intermediate_files_dir = anat_dir / 'work_dir'
         intermediate_files_dir.mkdir(parents=True, exist_ok=True)
         for dirpath in anat_dir.glob('*'):
             if dirpath.name.startswith('workdir') or dirpath.name.endswith('QC'):
                 shutil.move(str(dirpath), str(intermediate_files_dir))
+
+        vqcdeface_prep(input_bids_dir, anat_dir, bids_defaced_outdir)
 
         if not no_clean:
             shutil.rmtree(intermediate_files_dir)
