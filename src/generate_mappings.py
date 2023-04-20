@@ -13,26 +13,14 @@
     visualqc T1 MRI utility : https://raamana.github.io/visualqc/cli_t1_mri.html
 """
 
-import argparse
 import json
+import random
 import subprocess
 from collections import defaultdict
 from pathlib import Path
 
 
-def get_args():
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description=__doc__)
-
-    parser.add_argument('-i', '--input', type=Path, action='store', dest='inputdir', metavar='INPUT_DIR',
-                        help='Path to input BIDS directory.')
-    parser.add_argument('-o', '--output', type=Path, action='store', dest='outdir', metavar='SCRIPT_OUTPUT_DIR',
-                        default=Path('.'), help="Path to directory that'll contain this script's outputs.")
-    args = parser.parse_args()
-
-    return args.inputdir.resolve(), args.outdir.resolve()
-
-
-def run(cmdstr, logfile):
+def run_command(cmdstr, logfile):
     """Runs the given command str as shell subprocess. If logfile object is provided, then the stdout and stderr of the
     subprocess is written to the log file.
 
@@ -40,12 +28,11 @@ def run(cmdstr, logfile):
     :param io.TextIOWrapper logfile: optional, File object to log the stdout and stderr of the subprocess.
     """
     if not logfile:
-        subprocess.run(cmdstr, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding='utf8', shell=True)
-    else:
-        subprocess.run(cmdstr, stdout=logfile, stderr=subprocess.STDOUT, encoding='utf8', shell=True)
+        logfile = subprocess.PIPE
+    subprocess.run(cmdstr, stdout=logfile, stderr=subprocess.STDOUT, encoding='utf8', shell=True)
 
 
-def primary_scans_qc_prep(mapping_dict, outdir):
+def primary_scans_qc_prep(mapping_dict, qc_prep):
     """Prepares a directory tree with symbolic links to primary scans and an id_list of primary scans to be used in the
     visualqc_t1_mri command.
 
@@ -60,7 +47,7 @@ def primary_scans_qc_prep(mapping_dict, outdir):
     for subjid in mapping_dict.keys():
 
         # check existence of sessions to query mapping dict
-        if mapping_dict[subjid].keys() != interested_keys:
+        if list(mapping_dict[subjid].keys()) != interested_keys:
             for sessid in mapping_dict[subjid].keys():
                 primary = mapping_dict[subjid][sessid]['primary_t1']
                 primaries.append(primary)
@@ -70,9 +57,8 @@ def primary_scans_qc_prep(mapping_dict, outdir):
         # remove empty strings from primaries list
         primaries = [p for p in primaries if p != '']
 
-    vqc_inputs = outdir.joinpath('logs', 'visualqc_prep/t1_mri')
-    if not vqc_inputs.exists:
-        vqc_inputs.mkdir(parents=True)
+    vqc_t1_mri = qc_prep / 't1_mri_QC'
+    vqc_t1_mri.mkdir(parents=True, exist_ok=True)
 
     id_list = []
     for primary in primaries:
@@ -80,22 +66,26 @@ def primary_scans_qc_prep(mapping_dict, outdir):
         subjid = entities[0]
 
         # check existence of session to construct destination path
-        sessid = [e for e in entities if e.startswith('ses')][0]
-        if sessid:
-            dest = vqc_inputs.joinpath(subjid, sessid, 'anat')
-        else:
-            dest = vqc_inputs.joinpath(subjid, 'anat')
-        if not dest.exists(): dest.mkdir(parents=True)
+        sessid = ""
+        for e in entities:
+            if e.startswith('ses-'):
+                sessid = e
+
+        dest = vqc_t1_mri / subjid / sessid / 'anat'
+        dest.mkdir(parents=True, exist_ok=True)
 
         id_list.append(dest)
-        ln_cmd = f"ln -s {primary} {dest.joinpath('primary.nii.gz')}"
-        run(ln_cmd, "")
+        primary_link = dest / 'primary.nii.gz'
+        if not primary_link.is_symlink():
+            try:
+                primary_link.symlink_to(primary)
+            except:
+                pass
 
-    with open(outdir.joinpath('logs', 'visualqc_prep/id_list_t1.txt'), 'w') as f:
-        for i in id_list:
-            f.write(str(i) + '\n')
+    with open(vqc_t1_mri / 't1_mri_id_list.txt', 'w') as f:
+        f.write('\n'.join([str(i) for i in id_list]))
 
-    vqc_t1_mri_cmd = f"visualqc_t1_mri -u {vqc_inputs} -i {vqc_inputs.parent.joinpath('id_list_t1.txt')} -m primary.nii.gz"
+    vqc_t1_mri_cmd = f"visualqc_t1_mri -u {vqc_t1_mri} -i {vqc_t1_mri / 't1_mri_id_list.txt'} -m primary.nii.gz"
 
     return vqc_t1_mri_cmd
 
@@ -107,12 +97,25 @@ def sort_by_acq_time(sidecars):
     :return list acq_time_sorted_list: A list of JSON sidecar file paths sorted by acquisition time in descending order.
     """
     acq_time_dict = dict()
-    for sidecar in sidecars:
-        sidecar_fobj = open(sidecar, 'r')
-        data = json.load(sidecar_fobj)
-        acq_time_dict[sidecar] = data["AcquisitionTime"]
+    acq_time_field_vars = ["AcquisitionTime", "AcquisitionDateTime"]
+    try:
+        for sidecar in sidecars:
+            with open(sidecar, 'r') as f:
+                data = json.load(f)
+                for field in acq_time_field_vars:
+                    if field in data.keys():
+                        acq_time_dict[sidecar] = data[field]
+        acq_time_sorted_list = sorted(acq_time_dict.items(), key=lambda key_val_tup: key_val_tup[1], reverse=True)
 
-    acq_time_sorted_list = sorted(acq_time_dict.items(), key=lambda key_val_tup: key_val_tup[1], reverse=True)
+    except:
+        newline_sidecars = '\n'.join(
+            [str(s) for s in sidecars])  # need this since f-string expression part cannot include a backslash
+        print(
+            f"'AcquisitionTime' or 'AcquisitionDateTime' field was not found in the following sidecar files:\n"
+            f"{newline_sidecars}. Picking a primary scan arbitrarily.")
+        random.shuffle(sidecars)  # shuffles the list in place
+        acq_time_sorted_list = sidecars
+
     return acq_time_sorted_list
 
 
@@ -122,26 +125,23 @@ def get_anat_dir_paths(subj_dir_path):
     :param Path subj_dir_path : Absolute path to subject directory.
     :return: A list of absolute paths to anat directory(s) within subject tree.
     """
-    anat_dirs = []
-    no_anat_dirs = []
 
     # check if there are session directories
-    # sess_exist, sessions = is_sessions(subj_dir_path)
     sessions = list(subj_dir_path.glob('ses-*'))
     sess_exist = True if sessions else False
 
+    no_anat_dirs = []
+    anat_dirs = []
     if not sess_exist:
-        anat_dir = subj_dir_path.joinpath('anat')
+        anat_dir = subj_dir_path / 'anat'
         if not anat_dir.exists():
-            # print(f'No anat directories found for {subj_dir_path.name}.\n')
             no_anat_dirs.append(subj_dir_path)
         else:
             anat_dirs.append(anat_dir)
     else:
         for sess in sessions:
-            anat_dir = sess.joinpath('anat')
+            anat_dir = sess / 'anat'
             if not anat_dir.exists():
-                # print(f'No anat directories found for {subj_dir_path.name} and {sess.name}.\n')
                 no_anat_dirs.append(sess)
             else:
                 anat_dirs.append(anat_dir)
@@ -170,7 +170,7 @@ def update_mapping_dict(mapping_dict, anat_dir, is_sessions, sidecars, t1_unavai
         # latest T1w scan in the session based on acquisition time
         nifti_fname = t1_acq_time_list[0][0].name.split('.')[0] + '.nii.gz'
 
-        primary_t1 = t1_acq_time_list[0][0].parent.joinpath(nifti_fname)
+        primary_t1 = t1_acq_time_list[0][0].parent / nifti_fname
         others = [str(s) for s in list(anat_dir.glob('*.nii*')) if s != primary_t1]
         t1_available.append(anat_dir.parent)
     else:
@@ -196,27 +196,28 @@ def summary_to_stdout(vqc_t1_cmd, sess_ct, t1s_found, t1s_not_found, no_anat_dir
     print(f"Dataset Summary")
     print(f"====================")
     print(f"Total number of sessions with 'anat' directory in the dataset: {sess_ct}")
-    print(f"Sessions with 'anat' directory with at least one T1w scan: {len(t1s_found)}")
-    print(f"Sessions without a T1w scan: {len(t1s_not_found)}")
-    print(f"List of sessions without a T1w scan:\n {readable_path_list}\n")
+    print(f"Sessions with 'anat' directory with at least one T1w scan: {len(t1s_found)}\n")
+    if len(t1s_not_found) != 0:  # don't print the following if it's not helpful to the user
+        print(f"Sessions without a T1w scan: {len(t1s_not_found)}")
+        print(f"List of sessions without a T1w scan:\n {readable_path_list}")
     print(
-        f"Please find the mapping file in JSON format at {str(output)} and other helpful logs at {str(output.joinpath('logs'))}\n")
+        f"\nPlease find the mapping file in JSON format at {str(output / 'primary_to_others_mapping.json')} \nand other helpful logs at {str(output / 'logs')}\n")
 
 
-def main():
-    input, output = get_args()
+def crawl(input_dir, output):
+    # make dir for log files and visualqc prep
+    dir_names = ['logs', 'QC_prep']
+    for dir_name in dir_names:
+        output.joinpath(dir_name).mkdir(parents=True, exist_ok=True)
 
-    # make a script logs dir
-    output.joinpath('logs').mkdir(parents=True, exist_ok=True)
-
-    # input_layout = bids.BIDSLayout(input) # taking insane amounts of time so not using pybids
     t1s_not_found = []
     t1s_found = []
     total_sessions = 0
 
     mapping_dict = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
 
-    for subj_dir in list(input.glob('sub-*')):
+    for subj_dir in list(input_dir.glob('sub-*')):
+        # subj_id = subj_dir.name
         anat_dirs, no_anat_dirs, sess_exist = get_anat_dir_paths(subj_dir)
         for anat_dir in anat_dirs:
             total_sessions += 1
@@ -225,25 +226,20 @@ def main():
                                                                          t1_sidecars, t1s_not_found, t1s_found)
 
     # write mapping dict to file
-    with open(output.joinpath('primary_to_others_mapping.json'), 'w') as f1:
+    with open(output / 'primary_to_others_mapping.json', 'w') as f1:
         json.dump(mapping_dict, f1, indent=4)
 
     # write session paths without T1w scan to file
-    with open(output.joinpath('logs', 't1_unavailable.txt'), 'w') as f2:
-        for sess_path in t1s_not_found:
-            f2.write(str(sess_path) + '\n')
+    with open(output / 'logs' / 't1_unavailable.txt', 'w') as f2:
+        f2.write('\n'.join([str(sess_path) for sess_path in t1s_not_found]))
+
+    with open(output / 'logs' / 'anat_unavailable.txt', 'w') as f3:
+        f3.write('\n'.join([str(p) for p in no_anat_dirs]))
 
     # write vqc command to file
-    vqc_t1_mri_cmd = primary_scans_qc_prep(mapping_dict, output)
-    with open(output.joinpath('logs', 'visualqc_t1_mri_cmd'), 'w') as f3:
-        f3.write(f"{vqc_t1_mri_cmd}\n")
-
-    with open(output.joinpath('logs', 'anat_unavailable.txt'), 'w') as f4:
-        for p in no_anat_dirs:
-            f4.write(str(p) + '\n')
+    vqc_t1_mri_cmd = primary_scans_qc_prep(mapping_dict, output / 'QC_prep')
+    with open(output / 'QC_prep' / 't1_mri_qc_cmd', 'w') as f4:
+        f4.write(f"{vqc_t1_mri_cmd}\n")
 
     summary_to_stdout(vqc_t1_mri_cmd, total_sessions, t1s_found, t1s_not_found, no_anat_dirs, output)
-
-
-if __name__ == "__main__":
-    main()
+    return mapping_dict
