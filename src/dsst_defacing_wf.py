@@ -120,7 +120,7 @@ def main():
                 subject,
                 session,
                 mapping_dict,
-                defacing_outputs,
+                bids_defaced_outdir,
                 no_clean
                 )
 
