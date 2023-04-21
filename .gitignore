@@ -1,14 +1,9 @@
 __pycache__/
-as_qc_failures.csv
-*.swarm
 *_testing/
 *_examples/
-scripts_outputs/
 .idea/
 .vscode/
 examples/visualqc_prep/
 examples/sub-01/
-user-testing/*
 lookup.json
 rename.py
-src/isolate_fsleyes_render_issue.py
