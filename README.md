@@ -100,9 +100,9 @@ a. Assuming these scripts are run on the NIH HPC system, the first step would be
 
   ```bash
   
-  for i in `ls -d ${INPUT_DIR}/*`; do \
+  for i in `ls -d ${INPUT_DIR}/sub-*`; do \
     SUBJ=$(echo $i | sed "s|${INPUT_DIR}/||g" ); \
-    echo "python src/dsst_defacing_wf.py -i ${INPUT_DIR} -o ${OUTPUT_DIR} -s ${SUBJ}"; \
+    echo "python src/dsst_defacing_wf.py -i ${INPUT_DIR} -o ${OUTPUT_DIR} -p ${SUBJ}"; \
     done > defacing_parallel_subject_level.swarm
   ```
 
@@ -122,9 +122,9 @@ parallelly. Similar to Option 2, the following commands loop through the dataset
 create a `swarm` file to be run on NIH HPC systems.
 
 ```bash
-for i in `ls -d ${INPUT_DIR}/*`; do
+for i in `ls -d ${INPUT_DIR}/sub-*`; do
   SUBJ=$(echo $i | sed "s|${INPUT_DIR}/||g" );
-  for j in `ls -d ${INPUT_DIR}/${SUBJ}/*`; do
+  for j in `ls -d ${INPUT_DIR}/${SUBJ}/ses-*`; do
     SESS=$(echo $j | sed "s|${INPUT_DIR}/${SUBJ}/||g" )
     echo "python src/dsst_defacing_wf.py -i ${INPUT_DIR} -o ${OUTPUT_DIR} -p ${SUBJ} -s ${SESS}";
     done;
