@@ -84,7 +84,7 @@ placeholders for paths to input and output directories, respectively.
 If you have a small dataset with less than 10 subjects, then it might be easiest to run the defacing algorithm serially.
 
 ```bash
-python dsst_defacing_wf.py -i ${INPUT_DIR} -o ${OUTPUT_DIR}
+python dsst-defacing-pipeline/src/dsst_defacing_wf.py -i ${INPUT_DIR} -o ${OUTPUT_DIR}
 ```
 
 #### Option 2: In parallel at subject level
@@ -102,7 +102,7 @@ a. Assuming these scripts are run on the NIH HPC system, the first step would be
   
   for i in `ls -d ${INPUT_DIR}/sub-*`; do \
     SUBJ=$(echo $i | sed "s|${INPUT_DIR}/||g" ); \
-    echo "python src/dsst_defacing_wf.py -i ${INPUT_DIR} -o ${OUTPUT_DIR} -p ${SUBJ}"; \
+    echo "python dsst-defacing-pipeline/src/dsst_defacing_wf.py -i ${INPUT_DIR} -o ${OUTPUT_DIR} -p ${SUBJ}"; \
     done > defacing_parallel_subject_level.swarm
   ```
 
@@ -126,7 +126,7 @@ for i in `ls -d ${INPUT_DIR}/sub-*`; do
   SUBJ=$(echo $i | sed "s|${INPUT_DIR}/||g" );
   for j in `ls -d ${INPUT_DIR}/${SUBJ}/ses-*`; do
     SESS=$(echo $j | sed "s|${INPUT_DIR}/${SUBJ}/||g" )
-    echo "python src/dsst_defacing_wf.py -i ${INPUT_DIR} -o ${OUTPUT_DIR} -p ${SUBJ} -s ${SESS}";
+    echo "python dsst-defacing-pipeline/src/dsst_defacing_wf.py -i ${INPUT_DIR} -o ${OUTPUT_DIR} -p ${SUBJ} -s ${SESS}";
     done;
   done > defacing_parallel_session_level.swarm
 ```
@@ -140,7 +140,7 @@ swarm -f defacing_parallel_session_level.swarm --merge-output --logdir ${OUTPUT_
 Generate 3D renders for every defaced image in the output directory.
 
   ```bash
-  python src/generate_renders.py -o ${OUTPUT_DIR}
+  python dsst-defacing-pipeline/src/generate_renders.py -o ${OUTPUT_DIR}
   ```
 
 ### Visual Inspection
