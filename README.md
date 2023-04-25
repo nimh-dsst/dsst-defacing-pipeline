@@ -127,14 +127,16 @@ python src/dsst_defacing_wf.py ${INPUT_DIR} ${OUTPUT_DIR} -n 10
 
 ### Option 3: Parallel defacing using `swarm`
 
+
 Assuming these scripts are run on the NIH HPC system, you can create a `swarm` file:
 
-```bash
-for i in `ls -d ${INPUT_DIR}/*` ; do \
-    SUBJECT=$(echo $i | sed "s|${INPUT_DIR}/sub-||g" ) ; \
-    echo "python src/dsst_defacing_wf.py ${INPUT_DIR} ${OUTPUT_DIR} -p ${SUBJECT}" ; \
-done > defacing_parallel_subject_level.swarm
-```
+  ```bash
+  
+  for i in `ls -d ${INPUT_DIR}/sub-*`; do \
+    SUBJ=$(echo $i | sed "s|${INPUT_DIR}/||g" ); \
+    echo "python dsst-defacing-pipeline/src/dsst_defacing_wf.py -i ${INPUT_DIR} -o ${OUTPUT_DIR} -p ${SUBJ}"; \
+    done > defacing_parallel_subject_level.swarm
+  ```
 
 The above BASH "for loop" crawls through the dataset and finds all subject directories to construct `dsst_defacing_wf.py` commands
 with the `-p/--participant-label` option.
@@ -152,13 +154,13 @@ in parallel. Similar to Option 2, the following commands loop through the datase
 create a `swarm` file to be run on NIH HPC systems.
 
 ```bash
-for i in `ls -d ${INPUT_DIR}/*` ; do
-    SUBJECT=$(echo $i | sed "s|${INPUT_DIR}/sub-||g" ) ;
-    for j in `ls -d ${INPUT_DIR}/sub-${SUBJECT}/*` ; do
-        SESSION=$(echo $j | sed "s|${INPUT_DIR}/${SUBJECT}/ses-||g" ) ;
-        echo "python src/dsst_defacing_wf.py ${INPUT_DIR} ${OUTPUT_DIR} -p ${SUBJECT} -s ${SESSION}" ;
-    done ;
-done > defacing_parallel_session_level.swarm
+for i in `ls -d ${INPUT_DIR}/sub-*`; do
+  SUBJ=$(echo $i | sed "s|${INPUT_DIR}/||g" );
+  for j in `ls -d ${INPUT_DIR}/${SUBJ}/ses-*`; do
+    SESS=$(echo $j | sed "s|${INPUT_DIR}/${SUBJ}/||g" )
+    echo "python dsst-defacing-pipeline/src/dsst_defacing_wf.py -i ${INPUT_DIR} -o ${OUTPUT_DIR} -p ${SUBJ} -s ${SESS}";
+    done;
+  done > defacing_parallel_session_level.swarm
 ```
 
 To run the swarm file, once created, use the following command:
@@ -171,9 +173,9 @@ swarm -f defacing_parallel_session_level.swarm --merge-output --logdir ${OUTPUT_
 
 Generate 3D renders for every defaced image in the output directory.
 
-```bash
-python src/generate_renders.py -o ${OUTPUT_DIR}
-```
+  ```bash
+  python dsst-defacing-pipeline/src/generate_renders.py -o ${OUTPUT_DIR}
+  ```
 
 ## Visual Inspection
 

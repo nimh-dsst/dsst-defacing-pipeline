@@ -6,8 +6,8 @@ Generates 3D renders of defaced images using FSLeyes. More info on FSLeyes can b
 import argparse
 import re
 import subprocess
-from pathlib import Path
 from multiprocessing.pool import Pool
+from pathlib import Path
 
 
 def get_args():
@@ -17,7 +17,7 @@ def get_args():
                         default=Path('.'), help="Path to defacing outputs directory.")
     parser.add_argument('-n', '--n-cpus', type=int, default=1,
                         help='Number of parallel processes to run. '
-                        'Defaults to 1, meaning "serial processing" when not provided.')
+                             'Defaults to 1, meaning "serial processing" when not provided.')
     return parser.parse_args()
 
 
@@ -45,9 +45,14 @@ def generate_3d_renders(defaced_img, render_outdir):
         yaw, pitch, roll = rot[0], rot[1], rot[2]
         outfile = render_outdir.joinpath('defaced_render_0' + str(idx) + '.png')
         if not outfile.exists():
-            fsleyes_render_cmd = f"export TMP_DISPLAY=$DISPLAY; unset DISPLAY; fsleyes render --scene 3d -rot {yaw} {pitch} {roll} --outfile {outfile} {defaced_img} -dr 20 250 -in spline -bf 0.3 -r 100 -ns 500; export DISPLAY=$TMP_DISPLAY"
-            print(fsleyes_render_cmd)
-            run_command(fsleyes_render_cmd)
+            if 'T2w' in render_outdir.parts:
+                fsleyes_render_cmd = f"fsleyes render --scene 3d -rot {yaw} {pitch} {roll} --outfile {outfile} {defaced_img} -dr 80 1000 -in spline -cm render1 -bf 0.3 -r 100 -ns 500;"
+            else:
+                fsleyes_render_cmd = f"fsleyes render --scene 3d -rot {yaw} {pitch} {roll} --outfile {outfile} {defaced_img} -dr 20 250 -in spline -cm render1 -bf 0.3 -r 100 -ns 500;"
+            cmd = f"export TMP_DISPLAY=$DISPLAY; unset DISPLAY; {fsleyes_render_cmd} export DISPLAY=$TMP_DISPLAY"
+
+            print(cmd)
+            run_command(cmd)
             print(f"Has the render been created? {outfile.exists()}")
 
 
@@ -64,8 +69,8 @@ def main():
         print(f'Running in Parallel with {args.n_cpus} cores')
         # initialize pool
         with Pool(processes=args.n_cpus) as p:
-            p.starmap(  generate_3d_renders, zip( defaced_imgs,
-                        [img.parent for img in defaced_imgs] )  )
+            p.starmap(generate_3d_renders, zip(defaced_imgs,
+                                               [img.parent for img in defaced_imgs]))
 
     else:
         raise ValueError(f"Provided --n-cpus of {args.n_cpus} is not a valid number of CPUs.")
@@ -77,7 +82,7 @@ def main():
     print(f"Run the following command to start a VisualQC Deface session:\n\t{vqcdeface_cmd}\n")
     with open(args.outdir / 'QC_prep' / 'defacing_qc_cmd', 'w') as f:
         f.write(vqcdeface_cmd + '\n')
-    
+
     print(f"All set to start visual inspection of defaced images!")
 
 
