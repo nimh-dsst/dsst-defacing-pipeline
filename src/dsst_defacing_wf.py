@@ -90,14 +90,6 @@ def main():
         else:
             to_deface = glob(os.path.join(args.bids_dir, "sub-*"))
 
-    # only for one subset of sessions
-    if args.session_id:
-        to_deface = glob(os.path.join(args.bids_dir, "sub-*", args.session_id))
-
-    # for all sessions
-    session_check = glob(os.path.join(args.bids_dir, "sub-*", "ses-*"))
-    if session_check != []:
-        to_deface = session_check
 
     # for all subjects
     else:
