@@ -23,13 +23,13 @@ def get_args():
     parser.add_argument('-n', '--n-cpus', type=int, default=1,
                         help='Number of parallel processes to run when there is more than one folder. '
                         'Defaults to 1, meaning "serial processing".')
-    parser.add_argument('-p', '--participant-label', nargs="+", type=str,
+    parser.add_argument('-p', '--participant-label', nargs="+", type=str, default=None,
                         help='The label(s) of the participant(s) that should be defaced. The label '
                         'corresponds to sub-<participant_label> from the BIDS spec '
                         '(so it does not include "sub-"). If this parameter is not '
                         'provided all subjects should be analyzed. Multiple '
                         'participants can be specified with a space separated list.')
-    parser.add_argument('-s', '--session-id', nargs="+", type=str,
+    parser.add_argument('-s', '--session-id', nargs="+", type=str, default=None,
                         help='The ID(s) of the session(s) that should be defaced. The label '
                         'corresponds to ses-<session_id> from the BIDS spec '
                         '(so it does not include "ses-"). If this parameter is not '
@@ -70,23 +70,23 @@ def main():
 
     to_deface = []
     # for one subject or list of subjects (and all their sessions, if present)
-    if args.participant_label:
+    if args.participant_label != None:
         for p in args.participant_label:
             to_deface.extend(glob(os.path.join(args.bids_dir, f'sub-{p}', "ses-*")))
             if not to_deface:
                 to_deface = glob(os.path.join(args.bids_dir, f'sub-{p}'))
 
     # only for one subset of sessions
-    if args.session_id:
+    if args.session_id != None:
         for s in args.session_id:
             to_deface = glob(os.path.join(args.bids_dir, "sub-*", f'ses-{s}'))
     # for all sessions
-    if not (args.participant_label or args.session_id):
+    if args.participant_label == None and args.session_id == None:
         session_check = glob(os.path.join(args.bids_dir, "sub-*", "ses-*"))
         if session_check:
             to_deface = session_check
 
-        # for all subjects
+        # for all subjects (without "ses-*" session directories)
         else:
             to_deface = glob(os.path.join(args.bids_dir, "sub-*"))
 
