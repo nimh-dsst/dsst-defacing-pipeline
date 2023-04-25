@@ -76,7 +76,7 @@ def primary_scans_qc_prep(mapping_dict, qc_prep):
 
         id_list.append(dest)
         primary_link = dest / 'primary.nii.gz'
-        if not primary_link.exists():
+        if not primary_link.is_symlink():
             try:
                 primary_link.symlink_to(primary)
             except:
@@ -98,16 +98,17 @@ def sort_by_acq_time(sidecars):
     """
     acq_time_dict = dict()
     acq_time_field_vars = ["AcquisitionTime", "AcquisitionDateTime"]
-    try:
-        for sidecar in sidecars:
-            with open(sidecar, 'r') as f:
-                data = json.load(f)
-                for field in acq_time_field_vars:
-                    if field in data.keys():
-                        acq_time_dict[sidecar] = data[field]
-        acq_time_sorted_list = sorted(acq_time_dict.items(), key=lambda key_val_tup: key_val_tup[1], reverse=True)
+    for sidecar in sidecars:
+        with open(sidecar, 'r') as f:
+            data = json.load(f)
+            for field in acq_time_field_vars:
+                if field in data.keys():
+                    acq_time_dict[sidecar] = data[field]
+    acq_time_sorted_dict_list = sorted(acq_time_dict.items(), key=lambda key_val_tup: key_val_tup[1], reverse=True)
 
-    except:
+    if acq_time_sorted_dict_list != []:
+        acq_time_sorted_list = [tup[0] for tup in acq_time_sorted_dict_list]
+    else:
         newline_sidecars = '\n'.join(
             [str(s) for s in sidecars])  # need this since f-string expression part cannot include a backslash
         print(
@@ -168,9 +169,9 @@ def update_mapping_dict(mapping_dict, anat_dir, is_sessions, sidecars, t1_unavai
         t1_acq_time_list = sort_by_acq_time(sidecars)
 
         # latest T1w scan in the session based on acquisition time
-        nifti_fname = t1_acq_time_list[0][0].name.split('.')[0] + '.nii.gz'
+        nifti_fname = t1_acq_time_list[0].name.split('.')[0] + '.nii.gz'
 
-        primary_t1 = t1_acq_time_list[0][0].parent / nifti_fname
+        primary_t1 = t1_acq_time_list[0].parent / nifti_fname
         others = [str(s) for s in list(anat_dir.glob('*.nii*')) if s != primary_t1]
         t1_available.append(anat_dir.parent)
     else:
@@ -180,12 +181,27 @@ def update_mapping_dict(mapping_dict, anat_dir, is_sessions, sidecars, t1_unavai
 
     # updating mapping dict
     if is_sessions:
+        if subjid not in mapping_dict:
+            mapping_dict[subjid] = {}
+
         sessid = anat_dir.parent.name
-        mapping_dict[subjid][sessid]['primary_t1'] = str(primary_t1)
-        mapping_dict[subjid][sessid]['others'] = others
+        if sessid not in mapping_dict[subjid]:
+            mapping_dict[subjid][sessid] = {
+                        'primary_t1': str(primary_t1),
+                        'others': others
+                    }
+
+        else:
+            mapping_dict[subjid][sessid] = {
+                'primary_t1': str(primary_t1),
+                'others': others
+            }
+
     else:
-        mapping_dict[subjid]['primary_t1'] = str(primary_t1)
-        mapping_dict[subjid]['others'] = others
+        mapping_dict[subjid] = {
+                    'primary_t1': str(primary_t1),
+                    'others': others
+                }
 
     return mapping_dict, t1_unavailable, t1_available
 
@@ -214,7 +230,8 @@ def crawl(input_dir, output):
     t1s_found = []
     total_sessions = 0
 
-    mapping_dict = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+    # mapping_dict = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+    mapping_dict = {}
 
     for subj_dir in list(input_dir.glob('sub-*')):
         # subj_id = subj_dir.name
