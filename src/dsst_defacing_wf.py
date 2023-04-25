@@ -91,9 +91,6 @@ def main():
             to_deface = glob(os.path.join(args.bids_dir, "sub-*"))
 
 
-    # for all subjects
-    else:
-        to_deface = glob(os.path.join(args.bids_dir, "sub-*"))
 
     # run generate mapping script
     mapping_dict = generate_mappings.crawl(input_dir, output)
