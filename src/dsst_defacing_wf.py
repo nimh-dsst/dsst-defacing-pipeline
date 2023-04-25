@@ -69,11 +69,26 @@ def main():
     no_clean = args.no_clean
 
     to_deface = []
-    # only for one subject (and all their sessions, if present)
+    # for one subject or list of subjects (and all their sessions, if present)
     if args.participant_label:
-        to_deface = glob(os.path.join(args.bids_dir, args.participant_label, "ses-*"))
-        if to_deface == []:
-            to_deface = glob(os.path.join(args.bids_dir, args.participant_label))
+        for p in args.participant_label:
+            to_deface.extend(glob(os.path.join(args.bids_dir, f'sub-{p}', "ses-*")))
+            if not to_deface:
+                to_deface = glob(os.path.join(args.bids_dir, f'sub-{p}'))
+
+    # only for one subset of sessions
+    if args.session_id:
+        for s in args.session_id:
+            to_deface = glob(os.path.join(args.bids_dir, "sub-*", f'ses-{s}'))
+    # for all sessions
+    if not (args.participant_label or args.session_id):
+        session_check = glob(os.path.join(args.bids_dir, "sub-*", "ses-*"))
+        if session_check:
+            to_deface = session_check
+
+        # for all subjects
+        else:
+            to_deface = glob(os.path.join(args.bids_dir, "sub-*"))
 
     # only for one subset of sessions
     if args.session_id:
