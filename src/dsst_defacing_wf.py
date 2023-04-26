@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 from glob import glob
 from multiprocessing.pool import Pool
@@ -15,10 +16,10 @@ def get_args():
     parser = argparse.ArgumentParser(
         description='Deface anatomical scans for a given BIDS dataset or a subject directory in BIDS format.')
 
-    parser.add_argument('bids_dir',
+    parser.add_argument('bids_dir',type=Path, required=True,
                         help='The directory with the input dataset '
                         'formatted according to the BIDS standard.')
-    parser.add_argument('output_dir',
+    parser.add_argument('output_dir', type=Path, required=True,
                         help='The directory where the output files should be stored.')
     parser.add_argument('-n', '--n-cpus', type=int, default=1,
                         help='Number of parallel processes to run when there is more than one folder. '
@@ -37,12 +38,23 @@ def get_args():
                         'sessions can be specified with a space separated list.')
     parser.add_argument('--no-clean', dest='no_clean', action='store_true', default=False,
                         help='If this argument is provided, then AFNI intermediate files are preserved.')
+    parser.add_argument('--swarm', dest='swarm', action='store_true', default=False,
+                        help='If this argument is provide, the script begins a swarm job that runs the pipeline on every subject in the dataset in parallel.')
 
     return parser.parse_args()
 
 
 def run_command(cmdstr):
-    subprocess.run(cmdstr, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding='utf8', shell=True)
+    p = subprocess.Popen(cmdstr, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+    while True:
+        line = p.stdout.readline()
+        line = str(line, 'utf-8')[:-1]
+        print(line)
+        if line == '' and p.poll() != None:
+            break
+    if p.returncode != 0:
+        raise Exception("Non zero return code: %d" % p.returncode)
+    # subprocess.run(cmdstr, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding='utf8', shell=True)
 
 
 def write_to_file(file_content, filepath):
@@ -60,12 +72,37 @@ def get_sess_dirs(subj_dir_path, mapping_dict):
     return sess_dirs
 
 
+def start_swarm_job(input_dir, output_dir, no_clean):
+    cmd_list = []
+    for subj_dir in input_dir.glob('sub-*'):
+        subj_id = subj_dir.name
+        script_path = os.path.realpath(__file__)
+        if no_clean:
+            cmd_list.append(
+                f"python {script_path} -i {input_dir} -o {output_dir} -p {subj_id} --no-clean")
+        else:
+            cmd_list.append(
+                f"python {script_path} -i {input_dir} -o {output_dir} -p {subj_id}")
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    swarm_file = output_dir / 'defacing_subject_level.swarm'
+    with open(swarm_file, 'w') as f:
+        f.write('\n'.join(cmd_list))
+
+    if swarm_file.exists():
+        if output_dir.joinpath('swarm_logs').exists():
+            shutil.rmtree(output_dir.joinpath('swarm_logs'))
+        run_command(f"swarm -f {swarm_file} --merge-output --logdir {output_dir}/swarm_logs")
+    else:
+        raise FileNotFoundError
+
+
 def main():
     # get command line arguments
     args = get_args()
 
-    input_dir = Path(args.bids_dir).resolve()
-    output = Path(args.output_dir).resolve()
+    input_dir = args.bids_dir.resolve()
+    output = args.output_dir.resolve()
     no_clean = args.no_clean
 
     to_deface = []
@@ -90,16 +127,18 @@ def main():
         else:
             to_deface = glob(os.path.join(args.bids_dir, "sub-*"))
 
+    if swarm_flag:
+        start_swarm_job(input_dir, output, no_clean)
 
+    else:
+        # run generate mapping script
+        mapping_dict = generate_mappings.crawl(input_dir, output)
 
-    # run generate mapping script
-    mapping_dict = generate_mappings.crawl(input_dir, output)
+        # create a separate bids tree with only defaced scans
+        bids_defaced_outdir = output / 'bids_defaced'
+        bids_defaced_outdir.mkdir(parents=True, exist_ok=True)
 
-    # create a separate bids tree with only defaced scans
-    bids_defaced_outdir = output / 'bids_defaced'
-    bids_defaced_outdir.mkdir(parents=True, exist_ok=True)
-
-    afni_refacer_failures = []  # list to capture afni_refacer_run failures
+        afni_refacer_failures = []  # list to capture afni_refacer_run failures
 
     # running processing style
     if args.n_cpus == 1:
@@ -171,6 +210,7 @@ def main():
 
     else:
         raise ValueError("Invalid processing type. Must be either 'serial' or 'parallel'.")
+
 
 if __name__ == "__main__":
     main()
