@@ -211,7 +211,7 @@ While describing this process, we frequently use the following terms:
 - **Other/Secondary Scans:** All scans *except* the primary scan are grouped together and referred to as "other" or
   "secondary" scans for a given session.
 - **Mapping File:** A JSON file that assigns/maps a primary scan (or `primary_t1`) to all other scans within a session.
-  Please find an example file [here](FILLINTHEBLANK).
+  Please find an example file [here](https://github.com/nimh-dsst/dsst-defacing-pipeline/blob/47288e429d0614a1d0be44f7176f85570823fbaa/examples/primary_to_others_mapping.json).
 - **[VisualQC](https://raamana.github.io/visualqc):** A suite of QC tools developed by Pradeep Raamana, PhD (Assistant
   Professor at University of Pittsburgh).
 
