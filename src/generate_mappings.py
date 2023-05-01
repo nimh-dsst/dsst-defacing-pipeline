@@ -32,64 +32,6 @@ def run_command(cmdstr, logfile):
     subprocess.run(cmdstr, stdout=logfile, stderr=subprocess.STDOUT, encoding='utf8', shell=True)
 
 
-def primary_scans_qc_prep(mapping_dict, qc_prep):
-    """Prepares a directory tree with symbolic links to primary scans and an id_list of primary scans to be used in the
-    visualqc_t1_mri command.
-
-    :param defaultdict mapping_dict: A dictionary mapping each subject's and session's primary and other scans.
-    :param Path() outdir: Path to output directory provided by the user. The output directory contains this scripts output files and
-        directories.
-    :return str vqc_t1_mri_cmd: A visualqc T1 MRI command string.
-    """
-
-    interested_keys = ['primary_t1', 'others']
-    primaries = []
-    for subjid in mapping_dict.keys():
-
-        # check existence of sessions to query mapping dict
-        if list(mapping_dict[subjid].keys()) != interested_keys:
-            for sessid in mapping_dict[subjid].keys():
-                primary = mapping_dict[subjid][sessid]['primary_t1']
-                primaries.append(primary)
-        else:
-            primary = mapping_dict[subjid]['primary_t1']
-            primaries.append(primary)
-        # remove empty strings from primaries list
-        primaries = [p for p in primaries if p != '']
-
-    vqc_t1_mri = qc_prep / 't1_mri_QC'
-    vqc_t1_mri.mkdir(parents=True, exist_ok=True)
-
-    id_list = []
-    for primary in primaries:
-        entities = Path(primary).name.split('_')
-        subjid = entities[0]
-
-        # check existence of session to construct destination path
-        sessid = ""
-        for e in entities:
-            if e.startswith('ses-'):
-                sessid = e
-
-        dest = vqc_t1_mri / subjid / sessid / 'anat'
-        dest.mkdir(parents=True, exist_ok=True)
-
-        id_list.append(dest)
-        primary_link = dest / 'primary.nii.gz'
-        if not primary_link.is_symlink():
-            try:
-                primary_link.symlink_to(primary)
-            except:
-                pass
-
-    with open(vqc_t1_mri / 't1_mri_id_list.txt', 'w') as f:
-        f.write('\n'.join([str(i) for i in id_list]))
-
-    vqc_t1_mri_cmd = f"visualqc_t1_mri -u {vqc_t1_mri} -i {vqc_t1_mri / 't1_mri_id_list.txt'} -m primary.nii.gz"
-
-    return vqc_t1_mri_cmd
-
-
 def sort_by_acq_time(sidecars):
     """Sorting a list of scans' JSON sidecars based on their acquisition time.
 
@@ -187,9 +129,9 @@ def update_mapping_dict(mapping_dict, anat_dir, is_sessions, sidecars, t1_unavai
         sessid = anat_dir.parent.name
         if sessid not in mapping_dict[subjid]:
             mapping_dict[subjid][sessid] = {
-                        'primary_t1': str(primary_t1),
-                        'others': others
-                    }
+                'primary_t1': str(primary_t1),
+                'others': others
+            }
 
         else:
             mapping_dict[subjid][sessid] = {
@@ -199,14 +141,14 @@ def update_mapping_dict(mapping_dict, anat_dir, is_sessions, sidecars, t1_unavai
 
     else:
         mapping_dict[subjid] = {
-                    'primary_t1': str(primary_t1),
-                    'others': others
-                }
+            'primary_t1': str(primary_t1),
+            'others': others
+        }
 
     return mapping_dict, t1_unavailable, t1_available
 
 
-def summary_to_stdout(vqc_t1_cmd, sess_ct, t1s_found, t1s_not_found, no_anat_dirs, output):
+def summary_to_stdout(sess_ct, t1s_found, t1s_not_found, output):
     readable_path_list = ['/'.join([path.parent.name, path.name]) for path in t1s_not_found]
     print(f"====================")
     print(f"Dataset Summary")
@@ -222,7 +164,7 @@ def summary_to_stdout(vqc_t1_cmd, sess_ct, t1s_found, t1s_not_found, no_anat_dir
 
 def crawl(input_dir, output):
     # make dir for log files and visualqc prep
-    dir_names = ['logs', 'QC_prep']
+    dir_names = ['logs', 'defacing_QC']
     for dir_name in dir_names:
         output.joinpath(dir_name).mkdir(parents=True, exist_ok=True)
 
@@ -253,10 +195,5 @@ def crawl(input_dir, output):
     with open(output / 'logs' / 'anat_unavailable.txt', 'w') as f3:
         f3.write('\n'.join([str(p) for p in no_anat_dirs]))
 
-    # write vqc command to file
-    vqc_t1_mri_cmd = primary_scans_qc_prep(mapping_dict, output / 'QC_prep')
-    with open(output / 'QC_prep' / 't1_mri_qc_cmd', 'w') as f4:
-        f4.write(f"{vqc_t1_mri_cmd}\n")
-
-    summary_to_stdout(vqc_t1_mri_cmd, total_sessions, t1s_found, t1s_not_found, no_anat_dirs, output)
+    summary_to_stdout(total_sessions, t1s_found, t1s_not_found, output)
     return mapping_dict
