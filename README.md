@@ -111,7 +111,7 @@ subject/session in the dataset using the `-n/--n-cpus` option. The following exa
 
 ```bash
 # activate your conda environment
-conda activate
+conda activate dsstdeface
 
 # once your conda environment is active, execute the following
 python src/run.py ${INPUT_DIR} ${OUTPUT_DIR} -n 10
