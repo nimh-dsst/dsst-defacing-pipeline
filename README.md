@@ -46,74 +46,62 @@ Once conda finishes creating the virtual environment, activate `dsstdeface`.
 conda activate dsstdeface
 ```
 
-## Using `dsst_defacing_wf.py`
+## Usage
 
-To deface anatomical scans in the dataset, run the `src/dsst_defacing_wf.py` script. From within the `dsst-defacing-pipeline` cloned directory, run the following command to see the help message.
+To deface anatomical scans in the dataset, run the `src/run.py` script. From within the `dsst-defacing-pipeline` cloned directory, run the following command to see the help message.
 
 ```text
-% python src/dsst_defacing_wf.py -h
+% python src/run.py -h
 
-usage: dsst_defacing_wf.py [-h] [-n N_CPUS]
-                           [-p PARTICIPANT_LABEL [PARTICIPANT_LABEL ...]]
-                           [-s SESSION_ID [SESSION_ID ...]]
-                           [--no-clean]
-                           bids_dir output_dir
+usage: run.py [-h] [-n N_CPUS] [-p PARTICIPANT_LABEL [PARTICIPANT_LABEL ...]]
+              [-s SESSION_ID [SESSION_ID ...]] [--no-clean]
+              bids_dir output_dir
 
-Deface anatomical scans for a given BIDS dataset or a subject
-directory in BIDS format.
+Deface anatomical scans for a given BIDS dataset or a subject directory in
+BIDS format.
 
 positional arguments:
-  bids_dir              The directory with the input dataset
-                        formatted according to the BIDS standard.     
-  output_dir            The directory where the output files should   
-                        be stored.
+  bids_dir              The directory with the input dataset formatted
+                        according to the BIDS standard.
+  output_dir            The directory where the output files should be stored.
 
-options:
+optional arguments:
   -h, --help            show this help message and exit
   -n N_CPUS, --n-cpus N_CPUS
-                        Number of parallel processes to run when      
-                        there is more than one folder. Defaults to    
-                        1, meaning "serial processing".
+                        Number of parallel processes to run when there is more
+                        than one folder. Defaults to 1, meaning "serial
+                        processing".
   -p PARTICIPANT_LABEL [PARTICIPANT_LABEL ...], --participant-label PARTICIPANT_LABEL [PARTICIPANT_LABEL ...]
-                        The label(s) of the participant(s) that       
-                        should be defaced. The label corresponds to   
-                        sub-<participant_label> from the BIDS spec    
-                        (so it does not include "sub-"). If this      
-                        parameter is not provided all subjects        
-                        should be analyzed. Multiple participants     
-                        can be specified with a space separated       
-                        list.
-  -s SESSION_ID [SESSION_ID ...], --session-id SESSION_ID [SESSION_ID ...]
-                        The ID(s) of the session(s) that should be    
+                        The label(s) of the participant(s) that should be
                         defaced. The label corresponds to
-                        ses-<session_id> from the BIDS spec (so it    
-                        does not include "ses-"). If this parameter   
-                        is not provided all subjects should be        
-                        analyzed. Multiple sessions can be specified  
-                        with a space separated list.
-  --no-clean            If this argument is provided, then AFNI       
-                        intermediate files are preserved.
+                        sub-<participant_label> from the BIDS spec (so it does
+                        not include "sub-"). If this parameter is not provided
+                        all subjects should be analyzed. Multiple participants
+                        can be specified with a space separated list.
+  -s SESSION_ID [SESSION_ID ...], --session-id SESSION_ID [SESSION_ID ...]
+                        The ID(s) of the session(s) that should be defaced.
+                        The label corresponds to ses-<session_id> from the
+                        BIDS spec (so it does not include "ses-"). If this
+                        parameter is not provided all subjects should be
+                        analyzed. Multiple sessions can be specified with a
+                        space separated list.
+  --no-clean            If this argument is provided, then AFNI intermediate
+                        files are preserved.
 ```
 
-The script can be run serially on a BIDS dataset or in parallel at subject/session level. The three methods of running
-the script have been described below with example commands:
-
-For readability of example commands, the following bash variables have been defined as follows:
-
-```bash
-INPUT_DIR="<path/to/BIDS/input/dataset>"
-OUTPUT_DIR="<path/to/desired/defacing/output/directory>"
-```
-
-**NOTE:** In the example commands below, `<path/to/BIDS/input/dataset>` and `<path/to/desired/output/directory>` are
-placeholders for paths to input and output directories, respectively.
+The script can be run serially on a BIDS dataset or in parallel at subject/session level. Both these methods of running
+the script have been described below with example commands.
 
 ### Option 1: Serial defacing
 
 If you have a small dataset with less than 10 subjects, then it might be easiest to run the defacing algorithm serially.
 
 ```bash
-python src/dsst_defacing_wf.py ${INPUT_DIR} ${OUTPUT_DIR}
+# activate your conda environment
+conda activate dsstdeface
+
+# once your conda environment is active, execute the following
+python src/run.py ${INPUT_DIR} ${OUTPUT_DIR}
 ```
 
 ### Option 2: Parallel defacing
@@ -122,60 +110,14 @@ If you have dataset with over 10 subjects and since each defacing job is indepen
 subject/session in the dataset using the `-n/--n-cpus` option. The following example command will run the pipeline occupying 10 processors at a time.
 
 ```bash
-python src/dsst_defacing_wf.py ${INPUT_DIR} ${OUTPUT_DIR} -n 10
+# activate your conda environment
+conda activate dsstdeface
+
+# once your conda environment is active, execute the following
+python src/run.py ${INPUT_DIR} ${OUTPUT_DIR} -n 10
 ```
 
-### Option 3: Parallel defacing using `swarm`
-
-
-Assuming these scripts are run on the NIH HPC system, you can create a `swarm` file:
-
-  ```bash
-  
-  for i in `ls -d ${INPUT_DIR}/sub-*`; do \
-    SUBJ=$(echo $i | sed "s|${INPUT_DIR}/||g" ); \
-    echo "python dsst-defacing-pipeline/src/dsst_defacing_wf.py -i ${INPUT_DIR} -o ${OUTPUT_DIR} -p ${SUBJ}"; \
-    done > defacing_parallel_subject_level.swarm
-  ```
-
-The above BASH "for loop" crawls through the dataset and finds all subject directories to construct `dsst_defacing_wf.py` commands
-with the `-p/--participant-label` option.
-
-Next you can run the swarm file with the following command:
-
-```bash
-swarm -f defacing_parallel_subject_level.swarm --merge-output --logdir ${OUTPUT_DIR}/swarm_log
-```
-
-### Option 4: In parallel at session level
-
-If the input dataset has multiple sessions per subject, then run the pipeline on every session in the dataset
-in parallel. Similar to Option 2, the following commands loop through the dataset to find subject and session IDs to
-create a `swarm` file to be run on NIH HPC systems.
-
-```bash
-for i in `ls -d ${INPUT_DIR}/sub-*`; do
-  SUBJ=$(echo $i | sed "s|${INPUT_DIR}/||g" );
-  for j in `ls -d ${INPUT_DIR}/${SUBJ}/ses-*`; do
-    SESS=$(echo $j | sed "s|${INPUT_DIR}/${SUBJ}/||g" )
-    echo "python dsst-defacing-pipeline/src/dsst_defacing_wf.py -i ${INPUT_DIR} -o ${OUTPUT_DIR} -p ${SUBJ} -s ${SESS}";
-    done;
-  done > defacing_parallel_session_level.swarm
-```
-
-To run the swarm file, once created, use the following command:
-
-```bash
-swarm -f defacing_parallel_session_level.swarm --merge-output --logdir ${OUTPUT_DIR}/swarm_log
-```
-
-## Using `generate_renders.py`
-
-Generate 3D renders for every defaced image in the output directory.
-
-  ```bash
-  python dsst-defacing-pipeline/src/generate_renders.py -o ${OUTPUT_DIR}
-  ```
+Additionally, the pipeline can be run on a single subject or session using the `-p/--participant-label` and `-s/--session-id`, respectively. 
 
 ## Visual Inspection
 

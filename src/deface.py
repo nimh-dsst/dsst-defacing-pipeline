@@ -1,7 +1,7 @@
 import gzip
+import os
 import re
 import shutil
-import os
 import subprocess
 from os import fspath
 from pathlib import Path
@@ -69,8 +69,25 @@ def copy_over_sidecar(scan_filepath, input_anat_dir, output_anat_dir):
     shutil.copy2(json_sidecar, output_anat_dir / filename)
 
 
+def generate_3d_renders(defaced_img, render_outdir):
+    rotations = [(45, 5, 10), (-45, 5, 10)]
+    for idx, rot in enumerate(rotations):
+        yaw, pitch, roll = rot[0], rot[1], rot[2]
+        outfile = render_outdir.joinpath('defaced_render_0' + str(idx) + '.png')
+        if not outfile.exists():
+            if 'T2w' in render_outdir.parts:
+                fsleyes_render_cmd = f"fsleyes render --scene 3d -rot {yaw} {pitch} {roll} --outfile {outfile} {defaced_img} -dr 80 1000 -in spline -cm render1 -bf 0.3 -r 100 -ns 500;"
+            else:
+                fsleyes_render_cmd = f"fsleyes render --scene 3d -rot {yaw} {pitch} {roll} --outfile {outfile} {defaced_img} -dr 20 250 -in spline -cm render1 -bf 0.3 -r 100 -ns 500;"
+            cmd = f"export TMP_DISPLAY=$DISPLAY; unset DISPLAY; {fsleyes_render_cmd} export DISPLAY=$TMP_DISPLAY"
+
+            print(cmd)
+            run_command(cmd, "")
+            print(f"Has the render been created? {outfile.exists()}")
+
+
 def vqcdeface_prep(bids_input_dir, defaced_anat_dir, bids_defaced_outdir):
-    defacing_qc_dir = bids_defaced_outdir.parent / 'QC_prep' / 'defacing_QC'
+    defacing_qc_dir = bids_defaced_outdir.parent / 'defacing_QC'
     interested_files = [f for f in defaced_anat_dir.rglob('*.nii.gz') if
                         'work_dir' not in str(f).split('/')]
     print(interested_files)
@@ -119,7 +136,10 @@ def reorganize_into_bids(input_bids_dir, subj_dir, sess_dir, primary_t1, bids_de
         intermediate_files_dir = anat_dir / 'work_dir'
         intermediate_files_dir.mkdir(parents=True, exist_ok=True)
         for dirpath in anat_dir.glob('*'):
-            if dirpath.name.startswith('workdir') or dirpath.name.endswith('QC'):
+            if dirpath.name.startswith('workdir'):
+                new_name = '_'.join(['afni', dirpath.name])
+                shutil.move(str(dirpath), str(intermediate_files_dir / new_name))
+            elif dirpath.name.endswith('QC'):
                 shutil.move(str(dirpath), str(intermediate_files_dir))
 
         vqcdeface_prep(input_bids_dir, anat_dir, bids_defaced_outdir)
@@ -208,6 +228,14 @@ def deface_primary_scan(input_bids_dir, subj_input_dir, sess_dir, mapping_dict, 
 
     # reorganizing the directory with defaced images into BIDS tree
     reorganize_into_bids(input_bids_dir, subj_input_dir, sess_dir, primary_t1, output_dir, no_clean)
+
+    # prep for visual inspection using visualqc deface
+    print(f"Preparing for QC by visual inspection...\n")
+    defaced_imgs = list(output_dir.parent.rglob('defaced.nii.gz'))
+    for img in defaced_imgs:
+        generate_3d_renders(img, img.parent)
+
+    # print(f"All set to start visual inspection of defaced images!")
 
     return missing_refacer_outputs
 
