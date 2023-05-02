@@ -48,51 +48,45 @@ conda activate dsstdeface
 
 ## Usage
 
-To deface anatomical scans in the dataset, run the `src/dsst_defacing_wf.py` script. From within the `dsst-defacing-pipeline` cloned directory, run the following command to see the help message.
+To deface anatomical scans in the dataset, run the `src/run.py` script. From within the `dsst-defacing-pipeline` cloned directory, run the following command to see the help message.
 
 ```text
 % python src/run.py -h
 
-usage: dsst_defacing_wf.py [-h] [-n N_CPUS]
-                           [-p PARTICIPANT_LABEL [PARTICIPANT_LABEL ...]]
-                           [-s SESSION_ID [SESSION_ID ...]]
-                           [--no-clean]
-                           bids_dir output_dir
+usage: run.py [-h] [-n N_CPUS] [-p PARTICIPANT_LABEL [PARTICIPANT_LABEL ...]]
+              [-s SESSION_ID [SESSION_ID ...]] [--no-clean]
+              bids_dir output_dir
 
-Deface anatomical scans for a given BIDS dataset or a subject
-directory in BIDS format.
+Deface anatomical scans for a given BIDS dataset or a subject directory in
+BIDS format.
 
 positional arguments:
-  bids_dir              The directory with the input dataset
-                        formatted according to the BIDS standard.     
-  output_dir            The directory where the output files should   
-                        be stored.
+  bids_dir              The directory with the input dataset formatted
+                        according to the BIDS standard.
+  output_dir            The directory where the output files should be stored.
 
-options:
+optional arguments:
   -h, --help            show this help message and exit
   -n N_CPUS, --n-cpus N_CPUS
-                        Number of parallel processes to run when      
-                        there is more than one folder. Defaults to    
-                        1, meaning "serial processing".
+                        Number of parallel processes to run when there is more
+                        than one folder. Defaults to 1, meaning "serial
+                        processing".
   -p PARTICIPANT_LABEL [PARTICIPANT_LABEL ...], --participant-label PARTICIPANT_LABEL [PARTICIPANT_LABEL ...]
-                        The label(s) of the participant(s) that       
-                        should be defaced. The label corresponds to   
-                        sub-<participant_label> from the BIDS spec    
-                        (so it does not include "sub-"). If this      
-                        parameter is not provided all subjects        
-                        should be analyzed. Multiple participants     
-                        can be specified with a space separated       
-                        list.
-  -s SESSION_ID [SESSION_ID ...], --session-id SESSION_ID [SESSION_ID ...]
-                        The ID(s) of the session(s) that should be    
+                        The label(s) of the participant(s) that should be
                         defaced. The label corresponds to
-                        ses-<session_id> from the BIDS spec (so it    
-                        does not include "ses-"). If this parameter   
-                        is not provided all subjects should be        
-                        analyzed. Multiple sessions can be specified  
-                        with a space separated list.
-  --no-clean            If this argument is provided, then AFNI       
-                        intermediate files are preserved.
+                        sub-<participant_label> from the BIDS spec (so it does
+                        not include "sub-"). If this parameter is not provided
+                        all subjects should be analyzed. Multiple participants
+                        can be specified with a space separated list.
+  -s SESSION_ID [SESSION_ID ...], --session-id SESSION_ID [SESSION_ID ...]
+                        The ID(s) of the session(s) that should be defaced.
+                        The label corresponds to ses-<session_id> from the
+                        BIDS spec (so it does not include "ses-"). If this
+                        parameter is not provided all subjects should be
+                        analyzed. Multiple sessions can be specified with a
+                        space separated list.
+  --no-clean            If this argument is provided, then AFNI intermediate
+                        files are preserved.
 ```
 
 The script can be run serially on a BIDS dataset or in parallel at subject/session level. Both these methods of running
@@ -103,7 +97,7 @@ the script have been described below with example commands.
 If you have a small dataset with less than 10 subjects, then it might be easiest to run the defacing algorithm serially.
 
 ```bash
-python src/dsst_defacing_wf.py ${INPUT_DIR} ${OUTPUT_DIR}
+python src/run.py ${INPUT_DIR} ${OUTPUT_DIR}
 ```
 
 ### Option 2: Parallel defacing
@@ -112,7 +106,7 @@ If you have dataset with over 10 subjects and since each defacing job is indepen
 subject/session in the dataset using the `-n/--n-cpus` option. The following example command will run the pipeline occupying 10 processors at a time.
 
 ```bash
-python src/dsst_defacing_wf.py ${INPUT_DIR} ${OUTPUT_DIR} -n 10
+python src/run.py ${INPUT_DIR} ${OUTPUT_DIR} -n 10
 ```
 
 Additionally, the pipeline can be run on a single subject or session using the `-p/--participant-label` and `-s/--session-id`, respectively. 
