@@ -110,6 +110,10 @@ If you have dataset with over 10 subjects and since each defacing job is indepen
 subject/session in the dataset using the `-n/--n-cpus` option. The following example command will run the pipeline occupying 10 processors at a time.
 
 ```bash
+# activate your conda environment
+conda activate
+
+# once your conda environment is active, execute the following
 python src/run.py ${INPUT_DIR} ${OUTPUT_DIR} -n 10
 ```
 
