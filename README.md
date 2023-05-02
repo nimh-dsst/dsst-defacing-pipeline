@@ -97,6 +97,10 @@ the script have been described below with example commands.
 If you have a small dataset with less than 10 subjects, then it might be easiest to run the defacing algorithm serially.
 
 ```bash
+# activate your conda environment
+conda activate
+
+# once your conda environment is active, execute the following
 python src/run.py ${INPUT_DIR} ${OUTPUT_DIR}
 ```
 
