@@ -98,7 +98,7 @@ If you have a small dataset with less than 10 subjects, then it might be easiest
 
 ```bash
 # activate your conda environment
-conda activate
+conda activate dsstdeface
 
 # once your conda environment is active, execute the following
 python src/run.py ${INPUT_DIR} ${OUTPUT_DIR}
