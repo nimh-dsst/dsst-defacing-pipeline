@@ -117,6 +117,7 @@ def update_mapping_dict(mapping_dict, anat_dir, is_sessions, sidecars, t1_unavai
         others = [str(s) for s in list(anat_dir.glob('*.nii*')) if s != primary_t1]
         t1_available.append(anat_dir.parent)
     else:
+
         primary_t1 = ""
         others = [str(s) for s in list(anat_dir.glob('*.nii*'))]
         t1_unavailable.append(anat_dir.parent)
