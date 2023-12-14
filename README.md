@@ -130,21 +130,7 @@ To visually inspect quality of defacing with [VisualQC](https://raamana.github.i
     ```bash
     sh ${OUTPUT_DIR}/QC_prep/defacing_qc_cmd
     ```
-
-## Conceptual design
-
-1. Generate a ["primary" scans](#terminology) to [other scans](#terminology) mapping file.
-2. Deface primary scans
-   with [@afni_refacer_run](https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/tutorials/refacer/refacer_run.html) program
-   developed by the AFNI Team.
-3. To deface remaining scans in the session, register them to the primary scan (using FSL `flirt` command) and then use
-   the primary scan's defacemask to generate a defaced image (using `fslmaths` command).
-4. Visually inspect defaced scans with [VisualQC](https://raamana.github.io/visualqc) deface tool or any other preferred
-   tool.
-5. Correct/fix defaced scans that failed visual inspection. See [here](FILLINTHEBLANK) for more info on types of failures.
-
-![Defacing Pipeline flowchart](images/defacing_pipeline.png)
-
+    
 ## Terminology
 
 While describing this process, we frequently use the following terms:
@@ -158,18 +144,6 @@ While describing this process, we frequently use the following terms:
 - **[VisualQC](https://raamana.github.io/visualqc):** A suite of QC tools developed by Pradeep Raamana, PhD (Assistant
   Professor at University of Pittsburgh).
 
-## References
-
-1. Theyers AE, Zamyadi M, O'Reilly M, Bartha R, Symons S, MacQueen GM, Hassel S, Lerch JP, Anagnostou E, Lam RW, Frey
-   BN, Milev R, Müller DJ, Kennedy SH, Scott CJM, Strother SC, and Arnott SR (2021)
-   [Multisite Comparison of MRI Defacing Software Across Multiple Cohorts](10.3389/fpsyt.2021.617997). Front. Psychiatry
-   12:617997. doi:10.3389/fpsyt.2021.617997
-2. `@afni_refacer_run` is the defacing tool used under the
-   hood. [AFNI Refacer program](https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/tutorials/refacer/refacer_run.html).
-3. FSL's [FLIRT](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FLIRT)
-   and [`fslmaths`](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils?highlight=%28fslmaths%29) programs have been used
-   for registration and masking steps in the workflow.
-4. [VisualQC](https://raamana.github.io/visualqc/) utility.
 
 ## Acknowledgements
 
