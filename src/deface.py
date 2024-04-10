@@ -148,7 +148,7 @@ def reorganize_into_bids(input_bids_dir, subj_dir, sess_dir, primary_t1, bids_de
             shutil.rmtree(intermediate_files_dir)
 
 
-def run_afni_refacer(primary_t1, others, subj_input_dir, sess_dir, output_dir):
+def run_afni_refacer(primary_t1, others, subj_input_dir, sess_dir, output_dir, mode):
     # constructing afni refacer command
     if primary_t1:
         subj_id = subj_input_dir.name
@@ -170,8 +170,12 @@ def run_afni_refacer(primary_t1, others, subj_input_dir, sess_dir, output_dir):
         prefix = primary_t1.name.split('.')[0]  # filename without the extension
 
         subj_outdir.mkdir(parents=True, exist_ok=True)  # make output directories within subject directory
-        # afni refacer commands
-        refacer_cmd = f"@afni_refacer_run -input {primary_t1} -mode_deface -no_clean -prefix {fspath(subj_outdir / prefix)}"
+        # construct afni refacer commands
+        if mode == 'aggressive':
+            refacer_cmd = f"@afni_refacer_run -input {primary_t1} -mode_deface -no_clean -prefix {fspath(subj_outdir / prefix)} -shell afni_refacer_shell_sym_2.0.nii.gz"
+
+        else:
+            refacer_cmd = f"@afni_refacer_run -input {primary_t1} -mode_deface -no_clean -prefix {fspath(subj_outdir / prefix)}"
 
         # TODO remove module load afni
         full_cmd = f"module load afni ; export OMP_NUM_THREADS=1 ; {refacer_cmd}"
@@ -208,7 +212,7 @@ def run_afni_refacer(primary_t1, others, subj_input_dir, sess_dir, output_dir):
         return missing_refacer_out
 
 
-def deface_primary_scan(input_bids_dir, subj_input_dir, sess_dir, mapping_dict, output_dir, no_clean):
+def deface_primary_scan(input_bids_dir, subj_input_dir, sess_dir, mapping_dict, output_dir, mode, no_clean):
     missing_refacer_outputs = []  # list to capture missing afni refacer workdirs
 
     subj_id = os.path.basename(subj_input_dir)
@@ -217,13 +221,13 @@ def deface_primary_scan(input_bids_dir, subj_input_dir, sess_dir, mapping_dict, 
     if sess_dir:
         primary_t1 = mapping_dict[subj_id][sess_id]['primary_t1']
         others = [str(s) for s in mapping_dict[subj_id][sess_id]['others'] if s != primary_t1]
-        missing_refacer_outputs.append(run_afni_refacer(primary_t1, others, subj_input_dir, sess_dir, output_dir))
+        missing_refacer_outputs.append(run_afni_refacer(primary_t1, others, subj_input_dir, sess_dir, output_dir, mode))
         print(f"Reorganizing {sess_dir} with defaced images into BIDS tree...\n")
 
     else:
         primary_t1 = mapping_dict[subj_id]['primary_t1']
         others = [str(s) for s in mapping_dict[subj_id]['others'] if s != primary_t1]
-        missing_refacer_outputs.append(run_afni_refacer(primary_t1, others, subj_input_dir, "", output_dir))
+        missing_refacer_outputs.append(run_afni_refacer(primary_t1, others, subj_input_dir, "", output_dir, mode))
         print(f"Reorganizing {subj_input_dir} with defaced images into BIDS tree...\n")
 
     # reorganizing the directory with defaced images into BIDS tree
