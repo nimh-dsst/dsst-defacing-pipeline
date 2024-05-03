@@ -176,7 +176,7 @@ def main():
                                                  session_list,
                                                  [mapping_dict] * len(subject_list),
                                                  [bids_defaced_outdir] * len(subject_list),
-                                                 [mode] * len(subject_list)
+                                                 [mode] * len(subject_list),
                                                  [no_clean] * len(subject_list)
                                              ))
 
