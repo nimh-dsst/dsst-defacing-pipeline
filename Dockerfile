@@ -2,21 +2,19 @@
 
 FROM docker.io/gentoo/portage:20240324 as portage
 FROM docker.io/gentoo/stage3:20240318
-RUN COPY --from=portage /var/db/repos/gentoo /var/db/repos/gentoo \
-    && RUN emerge -v --noreplace dev-vcs/git \
-    && RUN emerge -v1u portage \
-    # Pinned commits for the dependency tree state
-    && ARG gentoo_hash=2d25617a1d085316761b06c17a93ec972f172fc6 \
-    && ARG science_hash=73916dd3680ffd92e5bd3d32b262e5d78c86a448 \
-    && ARG FEATURES="-ipc-sandbox -network-sandbox -pid-sandbox" \
-    # This will be bound, and contents available outside of container
-    && RUN mkdir /outputs \
-    && COPY gentoo-portage/ /etc/portage/ \
-    # Moving gentoo repo from default rsync to git
-    && RUN rm /var/db/repos/gentoo -rf \
-    # Cloning manually to prevent vdb update, pinning state via git
-    # Allegedly it's better to chain everything in one command, something with container layers 🤔
-    && RUN \
+
+COPY --from=portage /var/db/repos/gentoo /var/db/repos/gentoo
+COPY gentoo-portage/ /etc/portage/
+
+ARG gentoo_hash=2d25617a1d085316761b06c17a93ec972f172fc6 \
+ARG science_hash=73916dd3680ffd92e5bd3d32b262e5d78c86a448 \
+ARG FEATURES="-ipc-sandbox -network-sandbox -pid-sandbox" \
+
+RUN emerge -v --noreplace dev-vcs/git \
+    && emerge -v1u portage \
+    && mkdir /outputs \
+    && rm /var/db/repos/gentoo -rf \
+    && \ 
                REPO_URL=$(grep "^sync-uri" /etc/portage/repos.conf/gentoo | sed -e "s/sync-uri *= *//g") && \
                mkdir -p /var/db/repos/gentoo && pushd /var/db/repos/gentoo && git init . && \
                        git remote add origin ${REPO_URL} && \
@@ -52,7 +50,7 @@ ENV CONDA_DIR="/opt/miniconda-latest" \
     PATH="/opt/miniconda-latest/bin:$PATH"
 RUN \
     # Install dependencies.
-    && export PATH="/opt/miniconda-latest/bin:$PATH" \
+    export PATH="/opt/miniconda-latest/bin:$PATH" \
     && echo "Downloading Miniconda installer ..." \
     && conda_installer="/tmp/miniconda.sh" \
     && curl -fsSL -o "$conda_installer" https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
