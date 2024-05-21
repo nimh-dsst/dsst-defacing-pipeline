@@ -25,7 +25,7 @@ RUN emerge -v --noreplace dev-vcs/git \
                mkdir -p /var/db/repos/science && pushd /var/db/repos/science && git init . && \
                        git remote add origin ${REPO_URL} && \
                        git fetch --filter="blob:none" origin $science_hash && \
-                       git reset --hard $science_hash && rm .git -rf && popd \
+                       git reset --hard $science_hash && rm .git -rf && popd
     # Old Christian: Remove sync-uri to not accidentally re-sync if we work with the package management interactively
     # Christian from the future: Maybe we want the option to re-sync if we're debugging it interactively...
     #RUN sed -i /etc/portage/repos.conf/{gentoo,science} -e "s/sync-type *= *git/sync-type =/g"
