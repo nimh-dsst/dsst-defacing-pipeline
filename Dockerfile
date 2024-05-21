@@ -17,7 +17,7 @@ RUN emerge -v --noreplace dev-vcs/git \
     && git config --global init.defaultBranch master \
     && \ 
                REPO_URL=$(grep "^sync-uri" /etc/portage/repos.conf/gentoo | sed -e "s/sync-uri *= *//g") && \
-               mkdir -p /var/db/repos/gentoo && pushd /var/db/repos/gentoo && git init . && \
+               set -x && export GIT_TRACE=1 && mkdir -p /var/db/repos/gentoo && pushd /var/db/repos/gentoo && git init . && \
                        git remote add origin ${REPO_URL} && \
                        git fetch --filter="blob:none" origin $gentoo_hash && \
                        git reset --hard $gentoo_hash && rm .git -rf && popd && \
