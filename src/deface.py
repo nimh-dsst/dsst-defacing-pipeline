@@ -173,8 +173,7 @@ def run_afni_refacer(primary_t1, others, subj_input_dir, sess_dir, output_dir):
         # afni refacer commands
         refacer_cmd = f"@afni_refacer_run -input {primary_t1} -mode_deface -no_clean -prefix {fspath(subj_outdir / prefix)}"
 
-        # TODO remove module load afni
-        full_cmd = f"module load afni ; export OMP_NUM_THREADS=1 ; {refacer_cmd}"
+        full_cmd = f"export OMP_NUM_THREADS=1 ; {refacer_cmd}"
 
         # TODO make log text less ugly; perhaps in a separate function
         log_filename = subj_outdir / 'defacing_pipeline.log'
