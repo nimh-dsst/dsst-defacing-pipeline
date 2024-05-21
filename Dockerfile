@@ -14,6 +14,7 @@ RUN emerge -v --noreplace dev-vcs/git \
     && emerge -v1u portage \
     && mkdir /outputs \
     && rm /var/db/repos/gentoo -rf \
+    && git config --global init.defaultBranch master \
     && \ 
                REPO_URL=$(grep "^sync-uri" /etc/portage/repos.conf/gentoo | sed -e "s/sync-uri *= *//g") && \
                mkdir -p /var/db/repos/gentoo && pushd /var/db/repos/gentoo && git init . && \
