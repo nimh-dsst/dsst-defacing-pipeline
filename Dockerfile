@@ -6,9 +6,9 @@ FROM docker.io/gentoo/stage3:20240318
 COPY --from=portage /var/db/repos/gentoo /var/db/repos/gentoo
 COPY gentoo-portage/ /etc/portage/
 
-ARG gentoo_hash=2d25617a1d085316761b06c17a93ec972f172fc6 \
-ARG science_hash=73916dd3680ffd92e5bd3d32b262e5d78c86a448 \
-ARG FEATURES="-ipc-sandbox -network-sandbox -pid-sandbox" \
+ARG gentoo_hash=2d25617a1d085316761b06c17a93ec972f172fc6
+ARG science_hash=73916dd3680ffd92e5bd3d32b262e5d78c86a448
+ARG FEATURES="-ipc-sandbox -network-sandbox -pid-sandbox"
 
 RUN emerge -v --noreplace dev-vcs/git \
     && emerge -v1u portage \
