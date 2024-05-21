@@ -1,4 +1,4 @@
-#!/usr/local/bin/python3
+#!/usr/bin/env python3
 """Generates Primary to "others" mapping file and prints VisualQC's T1 MRI utility command.
 
 
