@@ -9,10 +9,10 @@ from pathlib import Path
 import register
 
 
-def run_command(cmdstr, logfile):
+def run_command(cmdstr, logfile, check : bool=True):
     if not logfile:
         logfile = subprocess.PIPE
-    subprocess.run(cmdstr, stdout=logfile, stderr=subprocess.STDOUT, encoding='utf8', shell=True)
+    subprocess.run(cmdstr, stdout=logfile, stderr=subprocess.STDOUT, encoding='utf8', shell=True, check=check)
 
 
 def rename_afni_workdir(workdir_path):
