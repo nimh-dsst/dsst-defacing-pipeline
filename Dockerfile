@@ -5,7 +5,6 @@ FROM docker.io/gentoo/stage3:20240318
 
 COPY --from=portage /var/db/repos/gentoo /var/db/repos/gentoo
 
-
 ARG gentoo_hash=2d25617a1d085316761b06c17a93ec972f172fc6
 ARG science_hash=73916dd3680ffd92e5bd3d32b262e5d78c86a448
 ARG FEATURES="-ipc-sandbox -network-sandbox -pid-sandbox"
@@ -17,45 +16,33 @@ ARG FEATURES="-ipc-sandbox -network-sandbox -pid-sandbox"
 # Lessons:
 # - needed to use echo -n  so we could have new lines
 # - \n at the beginning since otherwise # lines are ignored as comments
+# NOTES/QUESTIONS:
+#  - hardcoded --jobs and --load-average -- I wonder if some generic way
 RUN \
     mkdir -p /etc/portage/; \
-    echo -e "### This file contains system-wide build variables, including Gentoo variables such as USE, which enable/disable optional package features. \
-\n \
+    echo -e "\
 \nCOMMON_FLAGS=\"-O2 -pipe -march=native\" \
-\n# Comment the following out on systems with less than 8 threads \
 \nMAKEOPTS=\"--jobs 8 --load-average 9\" \
 \nCFLAGS=\"\${COMMON_FLAGS}\" \
 \nCXXFLAGS=\"\${COMMON_FLAGS}\" \
 \nFCFLAGS=\"\${COMMON_FLAGS}\" \
 \nFFLAGS=\"\${COMMON_FLAGS}\" \
-\n \
-\n# NOTE: This stage was built with the bindist Use flag enabled \
-\n \
-\n# This sets the language of build output to English. \
-\n# Please keep this setting intact when reporting bugs. \
 \nLC_MESSAGES=C \
-\n \
 \nUSE=\"\${USE} science\" \
 \nACCEPT_LICENSE=\"*\" \
-\n \
-\n# Needed in the container environment \
-\n#FEATURES=\"-ipc-sandbox -network-sandbox -pid-sandbox\""  > "/etc/portage/make.conf"; \
+"  > "/etc/portage/make.conf"; \
 mkdir -p "/etc/portage/package.accept_keywords"; \
-echo -e "### This is needed because ::science packages are generally not marked as stable \
-\n*/* ~amd64"  > "/etc/portage/package.accept_keywords/gen" ; \
+echo -e "*/* ~amd64"  > "/etc/portage/package.accept_keywords/gen" ; \
 mkdir -p "/etc/portage/package.mask"; \
-echo -e "### This is empty, thankfully. \
-\n### If we find bugs in some version of some package we can blacklist the package, version, or feature that causes it here."  > "/etc/portage/package.mask/bugs"; \
+touch "/etc/portage/package.mask/bugs"; \
 mkdir -p "/etc/portage/repos.conf" ; \
 echo -e "[gentoo] \
 \nlocation = /var/db/repos/gentoo \
-\n# We sync manually, but we need sync-uri to be written down somewhere to do so \
 \nsync-type = git \
 \nsync-uri = https://anongit.gentoo.org/git/repo/gentoo.git \
 \nsync-git-verify-commit-signature = yes"  > "/etc/portage/repos.conf/gentoo"; \
 echo -e "[science] \
 \nlocation = /var/db/repos/science \
-\n# We sync manually, but we need sync-uri to be written down somewhere to do so \
 \nsync-type = git \
 \nsync-uri = https://anongit.gentoo.org/git/proj/sci.git \
 \npriority = 7777"  > "/etc/portage/repos.conf/science"
