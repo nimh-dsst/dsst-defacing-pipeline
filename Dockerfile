@@ -5,8 +5,8 @@ FROM docker.io/gentoo/stage3:20240318
 
 COPY --from=portage /var/db/repos/gentoo /var/db/repos/gentoo
 
-ARG gentoo_hash=2d25617a1d085316761b06c17a93ec972f172fc6
-ARG science_hash=73916dd3680ffd92e5bd3d32b262e5d78c86a448
+ARG gentoo_hash=0e9370b45a589867220384ca6c63bc6bcaec3f74
+ARG science_hash=5307342730267714f7019d62f77b2d9bf7624d8c
 ARG FEATURES="-ipc-sandbox -network-sandbox -pid-sandbox"
 
 # Instead of
