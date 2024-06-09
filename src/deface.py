@@ -9,10 +9,10 @@ from pathlib import Path
 import register
 
 
-def run_command(cmdstr, logfile):
+def run_command(cmdstr, logfile, check : bool=True):
     if not logfile:
         logfile = subprocess.PIPE
-    subprocess.run(cmdstr, stdout=logfile, stderr=subprocess.STDOUT, encoding='utf8', shell=True)
+    subprocess.run(cmdstr, stdout=logfile, stderr=subprocess.STDOUT, encoding='utf8', shell=True, check=check)
 
 
 def rename_afni_workdir(workdir_path):
@@ -63,7 +63,7 @@ def compress_to_gz(input_file, output_file):
 
 
 def copy_over_sidecar(scan_filepath, input_anat_dir, output_anat_dir):
-    prefix = '_'.join([i for i in re.split('_|\.', scan_filepath.name) if i not in ['defaced', 'nii', 'gz']])
+    prefix = '_'.join([i for i in re.split(r'_|\.', scan_filepath.name) if i not in ['defaced', 'nii', 'gz']])
     filename = prefix + '.json'
     json_sidecar = input_anat_dir / filename
     shutil.copy2(json_sidecar, output_anat_dir / filename)
@@ -177,8 +177,7 @@ def run_afni_refacer(primary_t1, others, subj_input_dir, sess_dir, output_dir, m
         else:
             refacer_cmd = f"@afni_refacer_run -input {primary_t1} -mode_deface -no_clean -prefix {fspath(subj_outdir / prefix)}"
 
-        # TODO remove module load afni
-        full_cmd = f"module load afni ; export OMP_NUM_THREADS=1 ; {refacer_cmd}"
+        full_cmd = f"export OMP_NUM_THREADS=1 ; {refacer_cmd}"
 
         # TODO make log text less ugly; perhaps in a separate function
         log_filename = subj_outdir / 'defacing_pipeline.log'

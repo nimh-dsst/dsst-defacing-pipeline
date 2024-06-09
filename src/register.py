@@ -11,16 +11,13 @@ def preprocess_facemask(fmask_path, logfile_obj):
     prefix = fmask_path.parent.joinpath('afni_facemask')
     defacemask = fmask_path.parent.joinpath('afni_defacemask.nii.gz')
 
-    # load fsl module
-    c0 = f"module load fsl"
-
     # split the 4D volume
     c1 = f"fslroi {fmask_path} {prefix} 1 1"
 
     # arithmetic on the result from above
     c2 = f"fslmaths {prefix}.nii.gz -abs -binv {defacemask}"
     print(f"Generating a defacemask... \n ")
-    run_command('; '.join([c0, c1, c2]), logfile_obj)
+    run_command('; '.join([c1, c2]), logfile_obj)
     try:
         if defacemask.exists():
             return defacemask
@@ -68,7 +65,7 @@ def register_to_primary_scan(subj_dir, afni_workdir, primary_scan, other_scans_l
 
         mask_cmd = f"fslmaths {other} -mas {other_mask} {other_defaced}"
 
-        full_cmd = " ; ".join(["module load fsl", cp_cmd, flirt_cmd, applyxfm_cmd, mask_cmd]) + '\n'
+        full_cmd = " ; ".join([cp_cmd, flirt_cmd, applyxfm_cmd, mask_cmd]) + '\n'
 
         print(f"Registering {other.name} to {primary_scan.name} and applying defacemask...")
         run_command(full_cmd, log_fileobj)
