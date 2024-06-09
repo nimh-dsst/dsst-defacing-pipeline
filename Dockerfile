@@ -88,6 +88,7 @@ COPY ["environment.yml", \
 COPY ["src", \
       "/opt/dsst-defacing-pipeline"]
 ENV CONDA_DIR="/opt/miniconda-latest" \
+    AFNI_ATLAS_PATH=/usr/share/afni-datasets/ \
     PATH="/opt/miniconda-latest/bin:$PATH"
 RUN \
     # Install dependencies.
