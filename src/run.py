@@ -33,6 +33,10 @@ def get_args():
                              '(so it does not include "ses-"). If this parameter is not '
                              'provided all subjects should be analyzed. Multiple '
                              'sessions can be specified with a space separated list.')
+    parser.add_argument('-m', '--mode', type=str, choices=['regular', 'aggressive'], default='regular',
+                        help=f"In the 'regular' mode, the pipeline runs AFNI refacer the default template and "
+                             f"in the 'aggressive' mode, the pipeline runs AFNI refacer with  the alternative shell "
+                             f"that removes more of the chin, neck and brows. ")
     parser.add_argument('--no-clean', dest='no_clean', action='store_true', default=False,
                         help='If this argument is provided, then AFNI intermediate files are preserved.')
 
@@ -74,6 +78,7 @@ def main():
 
     input_dir = args.bids_dir.resolve()
     output = args.output_dir.resolve()
+    mode = args.mode
     no_clean = args.no_clean
 
     # run generate mapping script
@@ -142,7 +147,9 @@ def main():
                 session,
                 mapping_dict,
                 bids_defaced_outdir,
+                mode,
                 no_clean
+
             )
 
             if missing_refacer_out is not None:
@@ -178,6 +185,7 @@ def main():
                                                  session_list,
                                                  [mapping_dict] * len(subject_list),
                                                  [bids_defaced_outdir] * len(subject_list),
+                                                 [mode] * len(subject_list),
                                                  [no_clean] * len(subject_list)
                                              ))
 
