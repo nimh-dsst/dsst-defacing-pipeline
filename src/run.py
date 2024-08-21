@@ -5,9 +5,8 @@ import subprocess
 from multiprocessing.pool import Pool
 from pathlib import Path
 
-import generate_mappings
-
 import deface
+import generate_mappings
 
 
 def get_args():
@@ -82,29 +81,6 @@ def main():
     mode = args.mode
     no_clean = args.no_clean
 
-    to_deface = []
-    # for one subject or list of subjects (and all their sessions, if present)
-    if args.participant_label is not None:
-        for p in args.participant_label:
-            to_deface.extend(list(args.bids_dir.joinpath(f'sub-{p}').glob("ses-*")))
-
-            if not to_deface:
-                to_deface = list(args.bids_dir.glob(f'sub-{p}'))
-
-    # only for one subset of sessions
-    if args.session_id is not None:
-        for s in args.session_id:
-            to_deface = list(args.bids_dir.rglob(f'ses-{s}'))
-    # for all sessions
-    if args.participant_label is None and args.session_id is None:
-        session_check = list(args.bids_dir.rglob("ses-*"))
-        if session_check:
-            to_deface = session_check
-
-        # for all subjects (without "ses-*" session directories)
-        else:
-            to_deface = list(args.bids_dir.glob("sub-*"))
-
     # run generate mapping script
     mapping_dict = generate_mappings.crawl(input_dir, output)
 
@@ -113,6 +89,39 @@ def main():
     bids_defaced_outdir.mkdir(parents=True, exist_ok=True)
 
     afni_refacer_failures = []  # list to capture afni_refacer_run failures
+
+    to_deface = []
+    # for one subject or list of subjects (and all their sessions, if present)
+    if args.participant_label is not None and args.session_id is None:
+        for p in args.participant_label:
+            to_deface.extend(list(args.bids_dir.joinpath(f'sub-{p}').glob("ses-*")))
+
+            if not to_deface:
+                to_deface = list(args.bids_dir.glob(f'sub-{p}'))
+
+    # for one subject or list of subjects and a specific session, if present
+    elif args.participant_label is not None and args.session_id is not None:
+        for p in args.participant_label:
+            for s in args.session_id:
+                to_deface.extend(list(args.bids_dir.glob(f'sub-{p}/ses-{s}/')))
+
+                if not to_deface:
+                    to_deface = list(args.bids_dir.glob(f'sub-{p}/ses-{s}/'))
+
+    # only for one subset of sessions
+    elif args.participant_label is None and args.session_id is not None:
+        for s in args.session_id:
+            to_deface = list(args.bids_dir.rglob(f'ses-{s}'))
+
+    # for all subjects and all sessions
+    elif args.participant_label is None and args.session_id is None:
+        session_check = list(args.bids_dir.rglob("ses-*"))
+        if session_check:
+            to_deface = session_check
+
+        # for all subjects (without "ses-*" session directories)
+        else:
+            to_deface = list(args.bids_dir.glob("sub-*"))
 
     # running processing style
     if args.n_cpus == 1:

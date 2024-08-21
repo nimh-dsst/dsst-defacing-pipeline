@@ -1,5 +1,4 @@
 import gzip
-import os
 import re
 import shutil
 import subprocess
@@ -17,10 +16,10 @@ def run_command(cmdstr, logfile):
 
 def rename_afni_workdir(workdir_path):
     default_prefix = workdir_path.name.split('.')[1]
-    required_file_prefixes = ('__work', 'defacing_pipeline.log')
+    required_file_suffixes = ('QC', 'defacing_pipeline.log')
     to_be_deleted_files = [
         str(f) for f in list(workdir_path.parent.glob('*'))
-        if not (f.name.startswith(required_file_prefixes) or f.name.endswith('QC'))]
+        if not (f.name.startswith('__work') or f.name.endswith(required_file_suffixes))]
     run_command(f"rm -rf {' '.join(to_be_deleted_files)}", '')
 
     new_workdir_path = workdir_path.parent / f'workdir_{default_prefix}'
@@ -75,14 +74,10 @@ def generate_3d_renders(defaced_img, render_outdir):
         yaw, pitch, roll = rot[0], rot[1], rot[2]
         outfile = render_outdir.joinpath('defaced_render_0' + str(idx) + '.png')
         if not outfile.exists():
-            if 'T2w' in render_outdir.parts:
-                fsleyes_render_cmd = f"fsleyes render --scene 3d -rot {yaw} {pitch} {roll} --outfile {outfile} {defaced_img} -dr 80 1000 -in spline -cm render1 -bf 0.3 -r 100 -ns 500;"
-            else:
-                fsleyes_render_cmd = f"fsleyes render --scene 3d -rot {yaw} {pitch} {roll} --outfile {outfile} {defaced_img} -dr 20 250 -in spline -cm render1 -bf 0.3 -r 100 -ns 500;"
-            cmd = f"export TMP_DISPLAY=$DISPLAY; unset DISPLAY; {fsleyes_render_cmd} export DISPLAY=$TMP_DISPLAY"
+            fsleyes_render_cmd = f"module load fsl; fsleyes render --scene 3d -rot {yaw} {pitch} {roll} --outfile {outfile} {defaced_img} --displayRange 20 250 --interpolation spline --cmap render1 --blendFactor 0.3 -r 100 --numSteps 500"
 
-            print(cmd)
-            run_command(cmd, "")
+            print(fsleyes_render_cmd)
+            run_command(fsleyes_render_cmd, "")
             print(f"Has the render been created? {outfile.exists()}")
 
 
@@ -105,25 +100,23 @@ def vqcdeface_prep(bids_input_dir, defaced_anat_dir, bids_defaced_outdir):
         if not img_link.is_symlink(): img_link.symlink_to(img)
 
 
-def reorganize_into_bids(input_bids_dir, subj_dir, sess_dir, primary_t1, bids_defaced_outdir, no_clean):
-    subj_id = subj_dir.name
-    sess_id = sess_dir.name if sess_dir else None
-
+def reorganize_into_bids(input_bids_dir, subj_id, sess_id, primary_scan, bids_defaced_outdir, no_clean):
     if sess_id:
         anat_dirs = list(bids_defaced_outdir.joinpath(subj_id, sess_id).rglob('anat'))
     else:
         anat_dirs = list(bids_defaced_outdir.joinpath(subj_id).rglob('anat'))
+
     # make workdir for each session within anat dir
     for anat_dir in anat_dirs:
         # iterate over all nii files within an anat dir to rename all primary and "other" scans
         for nii_filepath in anat_dir.rglob('*nii*'):
             if nii_filepath.name.startswith('tmp.99.result'):
                 # convert to nii.gz, rename and copy over to anat dir
-                gz_file = anat_dir / Path(primary_t1).name
+                gz_file = anat_dir / Path(primary_scan).name
                 compress_to_gz(nii_filepath, gz_file)
 
                 # copy over corresponding json sidecar
-                copy_over_sidecar(Path(primary_t1), input_bids_dir / anat_dir.relative_to(bids_defaced_outdir),
+                copy_over_sidecar(Path(primary_scan), input_bids_dir / anat_dir.relative_to(bids_defaced_outdir),
                                   anat_dir)
 
             elif nii_filepath.name.endswith('_defaced.nii.gz'):
@@ -150,24 +143,33 @@ def reorganize_into_bids(input_bids_dir, subj_dir, sess_dir, primary_t1, bids_de
 
 def run_afni_refacer(primary_t1, others, subj_input_dir, sess_dir, output_dir, mode):
     # constructing afni refacer command
-    if primary_t1:
-        subj_id = subj_input_dir.name
-        sess_id = sess_dir.name if sess_dir else ""
+    subj_id = subj_input_dir.name
 
-        primary_t1 = Path(primary_t1)
+    all_primaries = []
+    if primary_t1:
+        all_primaries.append(primary_t1)
+        all_others = others
+    else:
+        # if there is no T1w scan in the session, then process every "other" scan as a primary scan
+        all_primaries = others
+        all_others = []
+
+    for primary in all_primaries:
+        primary = Path(primary)
 
         # setting up directory structure
-        entities = primary_t1.name.split('_')
+        entities = primary.name.split('_')
         for i in entities:
             if i.startswith('acq-'):
                 acq = i.split('-')[1]
             else:
                 acq = ""
 
-        # TODO test on hv_protocol dataset to confirm. Is this directory even necessary with the new pipeline?
-        subj_outdir = output_dir / subj_id / sess_id / 'anat' / acq
+        subj_output_dir = output_dir / subj_id / sess_id / 'anat' / acq
+        if not subj_output_dir.exists():
+            subj_output_dir.mkdir(parents=True, exist_ok=True)  # make output directories within subject directory
 
-        prefix = primary_t1.name.split('.')[0]  # filename without the extension
+        prefix = primary.name.split('.')[0]  # filename without the extension
 
         subj_outdir.mkdir(parents=True, exist_ok=True)  # make output directories within subject directory
         # construct afni refacer commands
@@ -177,11 +179,16 @@ def run_afni_refacer(primary_t1, others, subj_input_dir, sess_dir, output_dir, m
         else:
             refacer_cmd = f"@afni_refacer_run -input {primary_t1} -mode_deface -no_clean -prefix {fspath(subj_outdir / prefix)}"
 
+
         # TODO remove module load afni
-        full_cmd = f"module load afni ; export OMP_NUM_THREADS=1 ; {refacer_cmd}"
+        full_cmd = f"module load afni ;  {refacer_cmd}"
 
         # TODO make log text less ugly; perhaps in a separate function
-        log_filename = subj_outdir / 'defacing_pipeline.log'
+        if sess_id:
+            log_filename = subj_output_dir / f'{subj_id}_{sess_id}_defacing_pipeline.log'
+        else:
+            log_filename = subj_output_dir / f'{subj_id}_defacing_pipeline.log'
+
         log_fileobj = open(log_filename, 'w')
         log_fileobj.write(
             f"================================ afni_refacer_run command ================================\n"
@@ -190,19 +197,19 @@ def run_afni_refacer(primary_t1, others, subj_input_dir, sess_dir, output_dir, m
         log_fileobj.flush()  # clear file object buffer
 
         # stdout text
-        print(f"Running @afni_refacer_run on {primary_t1.name}\nFind command logs at {log_filename}")
+        print(f"Running @afni_refacer_run on {primary.name}\nCommand logs at {log_filename}")
         run_command(full_cmd, log_fileobj)
-        print(f"@afni_refacer_run command completed on {primary_t1.name}\n")
+        print(f"@afni_refacer_run command completed on {primary.name}\n")
 
         # rename afni workdirs
-        workdir_list = list(subj_outdir.glob('*work_refacer*'))
+        workdir_list = list(subj_output_dir.glob('*work_refacer*'))
         if len(workdir_list) > 0:
             missing_refacer_out = ""
             log_fileobj.flush()
             new_afni_workdir = rename_afni_workdir(workdir_list[0])
 
             # register other scans to the primary scan
-            register.register_to_primary_scan(subj_input_dir, new_afni_workdir, primary_t1, others, log_fileobj)
+            register.register_to_primary_scan(subj_input_dir, new_afni_workdir, primary, all_others, log_fileobj)
 
         else:
             log_fileobj.write(
@@ -213,40 +220,24 @@ def run_afni_refacer(primary_t1, others, subj_input_dir, sess_dir, output_dir, m
 
 
 def deface_primary_scan(input_bids_dir, subj_input_dir, sess_dir, mapping_dict, output_dir, mode, no_clean):
+    
     missing_refacer_outputs = []  # list to capture missing afni refacer workdirs
+    
+    subj_id = Path(subj_input_dir).name
+    sess_id = Path(sess_dir).name if sess_dir else ""
 
-    subj_id = os.path.basename(subj_input_dir)
-    sess_id = os.path.basename(sess_dir) if sess_dir else None
-
-    if sess_dir:
+    if not sess_id:
+        primary_t1 = mapping_dict[subj_id]['primary_t1']
+        others = [str(s) for s in mapping_dict[subj_id]['others'] if s != primary_t1]
+        missing_refacer_outputs.append(run_afni_refacer(primary_t1, others, subj_input_dir, "", output_dir, mode))
+        print(f"Reorganizing {subj_input_dir} with defaced images into BIDS tree...\n")
+    else:
         primary_t1 = mapping_dict[subj_id][sess_id]['primary_t1']
         others = [str(s) for s in mapping_dict[subj_id][sess_id]['others'] if s != primary_t1]
         missing_refacer_outputs.append(run_afni_refacer(primary_t1, others, subj_input_dir, sess_dir, output_dir, mode))
         print(f"Reorganizing {sess_dir} with defaced images into BIDS tree...\n")
 
-    else:
-        primary_t1 = mapping_dict[subj_id]['primary_t1']
-        others = [str(s) for s in mapping_dict[subj_id]['others'] if s != primary_t1]
-        missing_refacer_outputs.append(run_afni_refacer(primary_t1, others, subj_input_dir, "", output_dir, mode))
-        print(f"Reorganizing {subj_input_dir} with defaced images into BIDS tree...\n")
-
     # reorganizing the directory with defaced images into BIDS tree
     reorganize_into_bids(input_bids_dir, subj_input_dir, sess_dir, primary_t1, output_dir, no_clean)
-
-    # prep for visual inspection using visualqc deface
-    print(f"Preparing for QC by visual inspection...\n")
-    defaced_imgs = list(output_dir.parent.rglob('defaced.nii.gz'))
-    for img in defaced_imgs:
-        generate_3d_renders(img, img.parent)
-
-    # print(f"All set to start visual inspection of defaced images!")
-
+    
     return missing_refacer_outputs
-
-
-def main():
-    return None
-
-
-if __name__ == "__main__":
-    main()
