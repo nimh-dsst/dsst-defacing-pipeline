@@ -216,10 +216,8 @@ def run_afni_refacer(primary_t1, others, subj_input_dir, sess_dir, output_dir, m
                 f"@afni_refacer_run work directory not found. Most probably because the refacer command failed.")
             missing_refacer_out = prefix
 
-        # reorganizing the directory with defaced images into BIDS tree
-        reorganize_into_bids(input_bids_dir, subj_id, sess_id, primary, output_dir, no_clean)
-
         return missing_refacer_out
+
 
 def deface_primary_scan(input_bids_dir, subj_input_dir, sess_dir, mapping_dict, output_dir, mode, no_clean):
     
@@ -239,5 +237,7 @@ def deface_primary_scan(input_bids_dir, subj_input_dir, sess_dir, mapping_dict, 
         missing_refacer_outputs.append(run_afni_refacer(primary_t1, others, subj_input_dir, sess_dir, output_dir, mode))
         print(f"Reorganizing {sess_dir} with defaced images into BIDS tree...\n")
 
-
+    # reorganizing the directory with defaced images into BIDS tree
+    reorganize_into_bids(input_bids_dir, subj_input_dir, sess_dir, primary_t1, output_dir, no_clean)
+    
     return missing_refacer_outputs
