@@ -1,11 +1,8 @@
 import argparse
-import json
 import re
-import subprocess
 from multiprocessing.pool import Pool
 from pathlib import Path
-from xml.sax import parse
-
+import utils
 import deface
 import generate_mappings
 
@@ -38,21 +35,11 @@ def get_args():
                              f"that removes more of the chin, neck and brows. ")
     parser.add_argument('--no-clean', dest='no_clean', action='store_true', default=False,
                         help='If this argument is provided, then AFNI intermediate files are preserved.')
+    parser.add_argument('--nih-hpc', dest='nih_hpc', action='store_true', default=False,
+                        help='While running the pipeline on NIH HPC, if this argument is provided, then the required \
+                        AFNI and FSL modules are loaded into the environment.')
 
     return parser.parse_args()
-
-
-def run_command(cmdstr):
-    subprocess.run(cmdstr, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding='utf8', shell=True)
-
-
-def write_to_file(file_content, filepath):
-    ext = filepath.split('.')[-1]
-    with open(filepath, 'w') as f:
-        if ext == 'json':
-            json.dump(file_content, f, indent=4)
-        else:
-            f.writelines(file_content)
 
 
 def get_sess_dirs(subj_dir_path, mapping_dict):
@@ -74,11 +61,20 @@ def construct_vqcdeface_cmd(qc_dir):
 def main():
     # get command line arguments
     args = get_args()
-
     input_dir = args.bids_dir.resolve()
     output_dir = args.output_dir.resolve()
     mode = args.mode
     no_clean = args.no_clean
+
+    defacing_log = output_dir / 'logs' / 'defacing_pipeline.log'
+    if not defacing_log.parent.exists():
+        defacing_log.parent.mkdir(parents=True, exist_ok=True)
+
+    main_logger = utils.setup_logger(defacing_log)
+
+    if not input_dir.exists():
+        main_logger.error(f"Input directory {input_dir} does not exist.")
+        raise FileNotFoundError("Please provide a valid path to input BIDS directory.")
 
     participant_labels = []
     if args.participant_label:
@@ -88,8 +84,10 @@ def main():
     if args.session_id:
         session_labels = [s.split('-')[1] if s.startswith('ses-') else s for s in args.session_id]
 
-    # run generate mapping script
+    ## run generate mapping script
     mapping_dict = generate_mappings.crawl(input_dir, output_dir)
+    main_logger.info(f"Mapping file at {str(output_dir / 'primary_to_others_mapping.json')} ")
+    main_logger.info(f"Logs at {str(output_dir / 'logs')}\n")
 
     # create a separate bids tree with only defaced scans
     bids_defaced_outdir = output_dir / 'bids_defaced'
@@ -129,7 +127,7 @@ def main():
 
     # running processing style
     if args.n_cpus == 1:
-        print('Defacing in Serial, one at a time')
+        main_logger.info('Defacing in Serial, one at a time')
         for defaceable in to_deface:
             subj_sess = defaceable.parts[-2:]
 
@@ -138,6 +136,7 @@ def main():
             elif subj_sess[1].startswith('sub-'):
                 subject = Path(subj_sess[1])
             else:
+                main_logger.error(f'Subject name not found in path.')
                 raise ValueError(f'Could not find subject name in path: {defaceable}')
 
             if subj_sess[1].startswith('ses-'):
@@ -152,14 +151,15 @@ def main():
                 mapping_dict,
                 bids_defaced_outdir,
                 mode,
-                no_clean
+                no_clean,
+                args.nih_hpc
             )
 
             if missing_refacer_out is not None:
                 afni_refacer_failures.extend(missing_refacer_out)
 
     elif args.n_cpus > 1:
-        print(f'Defacing in Parallel with {args.n_cpus} cores')
+        main_logger.info(f'Defacing in Parallel with {args.n_cpus} cores')
         # initialize pool
         with Pool(processes=args.n_cpus) as p:
 
@@ -173,6 +173,7 @@ def main():
                 elif subj_sess[1].startswith('sub-'):
                     subject_list.append(Path(subj_sess[1]))
                 else:
+                    main_logger.error(f'Subject name not found in path.')
                     raise ValueError(f'Could not find subject name in path: {defaceable}')
 
                 if subj_sess[1].startswith('ses-'):
@@ -189,7 +190,8 @@ def main():
                                                  [mapping_dict] * len(subject_list),
                                                  [bids_defaced_outdir] * len(subject_list),
                                                  [mode] * len(subject_list),
-                                                 [no_clean] * len(subject_list)
+                                                 [no_clean] * len(subject_list),
+                                                 [args.nih_hpc] * len(subject_list)
                                              ))
 
         # collect failures
@@ -198,7 +200,7 @@ def main():
                 afni_refacer_failures.extend(missing_refacer_out)
 
         vqcdeface_cmd = construct_vqcdeface_cmd(output_dir / 'defacing_QC')
-        print(f"Run the following command to start a VisualQC Deface session:\n\t{vqcdeface_cmd}\n")
+        main_logger.info(f"Run the following command to start a VisualQC Deface session:\n\t{vqcdeface_cmd}\n")
         with open(output_dir / 'defacing_qc_cmd', 'w') as f:
             f.write(vqcdeface_cmd + '\n')
 
