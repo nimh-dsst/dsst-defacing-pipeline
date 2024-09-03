@@ -1,39 +1,11 @@
-import logging
-import logging.config
-import logging.handlers
 import subprocess
 import json
+import gzip
 
 
 def run_command(cmd_str):
     result = subprocess.run(cmd_str, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding='utf8', shell=True)
     return result.stdout, result.stderr
-
-
-def setup_logger(log_filepath):
-    # setting logger level
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
-
-    # configure formatters
-    brief_formatter = logging.Formatter('%(levelname)s: %(message)s')
-    precise_formatter = logging.Formatter(fmt='%(asctime)s line %(lineno)d: %(message)s',
-                                          datefmt='%Y-%m-%d %H:%M:%S%z')
-
-    # configure file handler
-    file_handler = logging.FileHandler(log_filepath)
-    file_handler.setLevel(logging.DEBUG)
-    file_handler.setFormatter(precise_formatter)
-
-    #  configure handler
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
-    console_handler.setFormatter(brief_formatter)
-
-    logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
-
-    return logger
 
 
 def write_to_file(file_content, filepath):
@@ -43,3 +15,16 @@ def write_to_file(file_content, filepath):
             json.dump(file_content, f, indent=4)
         else:
             f.writelines(file_content)
+
+
+def compress_to_gz(input_file, output_file):
+    if not output_file.exists():
+        with open(input_file, 'rb') as f_input:
+            with gzip.open(output_file, 'wb') as f_output:
+                f_output.writelines(f_input)
+
+
+def get_sess_dirs(subj_dir_path, mapping_dict):
+    sess_dirs = [subj_dir_path / key if key.startswith('ses-') else "" for key in
+                 mapping_dict[subj_dir_path.name].keys()]
+    return sess_dirs

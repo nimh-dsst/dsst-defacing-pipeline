@@ -5,6 +5,9 @@ from pathlib import Path
 import utils
 import deface
 import generate_mappings
+import logging
+import logging.config
+import logging.handlers
 
 
 def get_args():
@@ -42,10 +45,29 @@ def get_args():
     return parser.parse_args()
 
 
-def get_sess_dirs(subj_dir_path, mapping_dict):
-    sess_dirs = [subj_dir_path / key if key.startswith('ses-') else "" for key in
-                 mapping_dict[subj_dir_path.name].keys()]
-    return sess_dirs
+def setup_logger(log_filepath):
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+
+    # setup formatters
+    brief_formatter = logging.Formatter('%(levelname)s: %(message)s')
+    precise_formatter = logging.Formatter(fmt='%(asctime)s line %(lineno)d: %(message)s',
+                                          datefmt='%Y-%m-%d %H:%M:%S%z')
+
+    # setup file handler
+    file_handler = logging.FileHandler(log_filepath)
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(precise_formatter)
+
+    # setup console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+    console_handler.setFormatter(brief_formatter)
+
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+
+    return logger
 
 
 def construct_vqcdeface_cmd(qc_dir):
@@ -61,19 +83,25 @@ def construct_vqcdeface_cmd(qc_dir):
 def main():
     # get command line arguments
     args = get_args()
-    input_dir = args.bids_dir.resolve()
+    bids_input_dir = args.bids_dir.resolve()
     output_dir = args.output_dir.resolve()
     mode = args.mode
     no_clean = args.no_clean
 
-    defacing_log = output_dir / 'logs' / 'defacing_pipeline.log'
-    if not defacing_log.parent.exists():
-        defacing_log.parent.mkdir(parents=True, exist_ok=True)
+    pipeline_log = output_dir / 'logs' / 'defacing_pipeline.log'
+    if not pipeline_log.parent.exists():
+        pipeline_log.parent.mkdir(parents=True, exist_ok=True)
+    main_logger = setup_logger(pipeline_log)
 
-    main_logger = utils.setup_logger(defacing_log)
+    if args.nih_hpc:
+        out, err = utils.run_command("module load afni ; module load fsl")
+        if err:
+            main_logger.error(f"Error loading AFNI and/or FSL modules.\n{err}")
+        else:
+            main_logger.info(f"AFNI and FSL modules loaded successfully.\n")
 
-    if not input_dir.exists():
-        main_logger.error(f"Input directory {input_dir} does not exist.")
+    if not bids_input_dir.exists():
+        main_logger.error(f"Input directory {bids_input_dir} does not exist.")
         raise FileNotFoundError("Please provide a valid path to input BIDS directory.")
 
     participant_labels = []
@@ -85,45 +113,44 @@ def main():
         session_labels = [s.split('-')[1] if s.startswith('ses-') else s for s in args.session_id]
 
     ## run generate mapping script
-    mapping_dict = generate_mappings.crawl(input_dir, output_dir)
+    mapping_dict = generate_mappings.crawl(bids_input_dir, output_dir)
     main_logger.info(f"Mapping file at {str(output_dir / 'primary_to_others_mapping.json')} ")
     main_logger.info(f"Logs at {str(output_dir / 'logs')}\n")
 
     # create a separate bids tree with only defaced scans
-    bids_defaced_outdir = output_dir / 'bids_defaced'
-    bids_defaced_outdir.mkdir(parents=True, exist_ok=True)
+    bids_output_dir = output_dir / 'bids_defaced'
+    bids_output_dir.mkdir(parents=True, exist_ok=True)
 
     afni_refacer_failures = []  # list to capture afni_refacer_run failures
 
     to_deface = []
-
     if participant_labels and not session_labels:
         # for one subject or list of subjects (and all their sessions, if present)
         for p in participant_labels:
-            to_deface.extend(list(input_dir.joinpath(f'sub-{p}').glob('ses-*')))
+            to_deface.extend(list(bids_input_dir.joinpath(f'sub-{p}').glob('ses-*')))
             if not to_deface:  # if no sess_dir found
-                to_deface.extend([input_dir.joinpath(f'sub-{p}')])
+                to_deface.extend([bids_input_dir.joinpath(f'sub-{p}')])
 
     elif participant_labels and session_labels:
         # for one subject or list of subjects and a specific session, if present
         for p in participant_labels:
             for s in session_labels:
-                to_deface.extend(list(args.bids_dir.joinpath(f'sub-{p}/ses-{s}/')))
+                to_deface.extend(list(bids_input_dir.joinpath(f'sub-{p}/ses-{s}/')))
                 if not to_deface:
-                    to_deface = list(args.bids_dir.joinpath(f'sub-{p}/ses-{s}/'))
+                    to_deface = list(bids_input_dir.joinpath(f'sub-{p}/ses-{s}/'))
 
     elif not participant_labels and not session_labels:
         # only for one subset of sessions
         for s in session_labels:
-            to_deface = list(args.bids_dir.rglob(f'ses-{s}'))  # TODO: could match ses dirs within dot dirs. Fix this.
+            to_deface = list(bids_input_dir.rglob(f'ses-{s}'))  # TODO: could match ses dirs within dot dirs. Fix this.
 
     elif args.participant_label is None and args.session_id is None:
         # for all subjects and all sessions
-        session_list = list(args.bids_dir.rglob('ses-*'))  # TODO: could match ses dirs within dot dirs. Fix this.
+        session_list = list(bids_input_dir.rglob('ses-*'))  # TODO: could match ses dirs within dot dirs. Fix this.
         if session_list:
             to_deface = session_list
         else:  # for all subjects (without "ses-*" session directories)
-            to_deface = list(args.bids_dir.glob('sub-*'))
+            to_deface = list(bids_input_dir.glob('sub-*'))
 
     # running processing style
     if args.n_cpus == 1:
@@ -145,14 +172,13 @@ def main():
                 session = None
 
             missing_refacer_out = deface.deface_primary_scan(
-                input_dir,
+                bids_input_dir,
                 subject,
                 session,
                 mapping_dict,
-                bids_defaced_outdir,
+                bids_output_dir,
                 mode,
-                no_clean,
-                args.nih_hpc
+                no_clean
             )
 
             if missing_refacer_out is not None:
@@ -184,14 +210,13 @@ def main():
             # parallel processing
             missing_refacer_outs = p.starmap(deface.deface_primary_scan,
                                              zip(
-                                                 [input_dir] * len(subject_list),
+                                                 [bids_input_dir] * len(subject_list),
                                                  subject_list,
                                                  session_list,
                                                  [mapping_dict] * len(subject_list),
-                                                 [bids_defaced_outdir] * len(subject_list),
+                                                 [bids_output_dir] * len(subject_list),
                                                  [mode] * len(subject_list),
-                                                 [no_clean] * len(subject_list),
-                                                 [args.nih_hpc] * len(subject_list)
+                                                 [no_clean] * len(subject_list)
                                              ))
 
         # collect failures

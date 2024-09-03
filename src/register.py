@@ -62,7 +62,7 @@ def register_to_primary_scan(subj_dir, afni_workdir, primary_scan, other_scans_l
 
             mask_cmd = f"fslmaths {other} -mas {other_mask} {other_defaced}"
 
-            full_cmd = " ; ".join(["module load fsl", cp_cmd, flirt_cmd, applyxfm_cmd, mask_cmd]) + '\n'
+            full_cmd = " ; ".join([cp_cmd, flirt_cmd, applyxfm_cmd, mask_cmd]) + '\n'
 
             subj_logger.info(f"Registering {other.name} to {primary_scan.name} and applying defacemask...")
             out, err = utils.run_command(full_cmd)

@@ -1,12 +1,36 @@
-import gzip
 import re
 import shutil
-from os import fspath
 from pathlib import Path
-
+import logging
+import logging.config
+import logging.handlers
 import register
-
 import utils
+
+
+def setup_logger(log_filepath):
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+
+    # setup formatters
+    brief_formatter = logging.Formatter('%(levelname)s: %(message)s')
+    precise_formatter = logging.Formatter(fmt='%(asctime)s line %(lineno)d: %(message)s',
+                                          datefmt='%Y-%m-%d %H:%M:%S%z')
+
+    # setup file handler
+    file_handler = logging.FileHandler(log_filepath)
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(precise_formatter)
+
+    # setup console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+    console_handler.setFormatter(brief_formatter)
+
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+
+    return logger
 
 
 def rename_afni_workdir(workdir_path, subj_logger):
@@ -27,15 +51,8 @@ def rename_afni_workdir(workdir_path, subj_logger):
     return new_workdir_path
 
 
-def compress_to_gz(input_file, output_file):
-    if not output_file.exists():
-        with open(input_file, 'rb') as f_input:
-            with gzip.open(output_file, 'wb') as f_output:
-                f_output.writelines(f_input)
-
-
 def copy_over_sidecar(scan_filepath, input_anat_dir, output_anat_dir):
-    prefix = '_'.join([i for i in re.split(r'_|\.', scan_filepath.name) if i not in ['defaced', 'nii', 'gz']])
+    prefix = '_'.join([i for i in re.split('_|\.', scan_filepath.name) if i not in ['defaced', 'nii', 'gz']])
     filename = prefix + '.json'
     json_sidecar = input_anat_dir / filename
     shutil.copy2(json_sidecar, output_anat_dir / filename)
@@ -58,7 +75,7 @@ def generate_3d_renders(defaced_img, render_outdir):
 
 
 def vqcdeface_prep(bids_input_dir, defaced_anat_dir, bids_defaced_outdir):
-    defacing_qc_dir = bids_defaced_outdir.parent / 'defacing_QC'
+    defacing_qc_dir = bids_defaced_outdir.parent / 'QC'
     interested_files = [f for f in defaced_anat_dir.rglob('*.nii.gz') if
                         'work_dir' not in str(f).split('/')]
 
@@ -76,11 +93,11 @@ def vqcdeface_prep(bids_input_dir, defaced_anat_dir, bids_defaced_outdir):
         if not img_link.is_symlink(): img_link.symlink_to(img)
 
 
-def reorganize_into_bids(input_bids_dir, subj_id, sess_id, primary_scan, bids_defaced_outdir, no_clean, subj_logger):
+def reorganize_into_bids(input_bids_dir, subj_id, sess_id, primary_scan, bids_output_dir, no_clean, subj_logger):
     if sess_id:
-        anat_dirs = list(bids_defaced_outdir.joinpath(subj_id, sess_id).rglob('anat'))
+        anat_dirs = list(bids_output_dir.joinpath(subj_id, sess_id).rglob('anat'))
     else:
-        anat_dirs = list(bids_defaced_outdir.joinpath(subj_id).rglob('anat'))
+        anat_dirs = list(bids_output_dir.joinpath(subj_id).rglob('anat'))
 
     # make workdir for each session within anat dir
     for anat_dir in anat_dirs:
@@ -89,32 +106,32 @@ def reorganize_into_bids(input_bids_dir, subj_id, sess_id, primary_scan, bids_de
             if nii_filepath.name.startswith('tmp.99.result'):
                 # convert to nii.gz, rename and copy over to anat dir
                 gz_file = anat_dir / Path(primary_scan).name
-                compress_to_gz(nii_filepath, gz_file)
+                utils.compress_to_gz(nii_filepath, gz_file)
 
                 # copy over corresponding json sidecar
-                copy_over_sidecar(Path(primary_scan), input_bids_dir / anat_dir.relative_to(bids_defaced_outdir),
+                copy_over_sidecar(Path(primary_scan), input_bids_dir / anat_dir.relative_to(bids_output_dir),
                                   anat_dir)
 
             elif nii_filepath.name.endswith('_defaced.nii.gz'):
                 new_filename = '_'.join(nii_filepath.name.split('_')[:-1]) + '.nii.gz'
                 shutil.copy2(nii_filepath, str(anat_dir / new_filename))
 
-                copy_over_sidecar(nii_filepath, input_bids_dir / anat_dir.relative_to(bids_defaced_outdir), anat_dir)
+                copy_over_sidecar(nii_filepath, input_bids_dir / anat_dir.relative_to(bids_output_dir), anat_dir)
 
         # move QC images and afni intermediate files to a new directory
-        intermediate_files_dir = anat_dir / 'work_dir'
-        intermediate_files_dir.mkdir(parents=True, exist_ok=True)
+        intermediate_dir = anat_dir / 'work_dir'
+        intermediate_dir.mkdir(parents=True, exist_ok=True)
         for dirpath in anat_dir.glob('*'):
             if dirpath.name.startswith('workdir'):
                 new_name = '_'.join(['afni', dirpath.name])
-                shutil.move(str(dirpath), str(intermediate_files_dir / new_name))
+                shutil.move(str(dirpath), str(intermediate_dir / new_name))
             elif dirpath.name.endswith('QC'):
-                shutil.move(str(dirpath), str(intermediate_files_dir))
+                shutil.move(str(dirpath), str(intermediate_dir))
 
-        vqcdeface_prep(input_bids_dir, anat_dir, bids_defaced_outdir)
+        vqcdeface_prep(input_bids_dir, anat_dir, bids_output_dir)
 
         if not no_clean:
-            shutil.rmtree(intermediate_files_dir)
+            shutil.rmtree(intermediate_dir)
 
 
 def run_afni_refacer(primary_t1, others, subj_input_dir, sess_id, output_dir, mode, subj_logger):
@@ -148,15 +165,15 @@ def run_afni_refacer(primary_t1, others, subj_input_dir, sess_id, output_dir, mo
         prefix = primary.name.split('.')[0]  # filename without the extension
 
         # construct afni refacer commands
-        refacer_cmd = f"@afni_refacer_run -input {primary_t1} -mode_deface -no_clean -prefix {fspath(subj_output_dir / prefix)}"
+        refacer_cmd = f"@afni_refacer_run -input {primary_t1} -mode_deface -no_clean -prefix {subj_output_dir / prefix}"
         if mode == 'aggressive':
             refacer_cmd = f"{refacer_cmd} -shell afni_refacer_shell_sym_2.0.nii.gz"
 
-        subj_logger.info(f"Running @afni_refacer_run on {primary.name}\n")
+        subj_logger.info(f"Running @afni_refacer_run on {primary.name}")
         subj_logger.info(f"Command: {refacer_cmd}")
         out, err = utils.run_command(refacer_cmd)
         if err:
-            subj_logger.error(f"Error running @afni_refacer_run on {primary.name}\n{err}")
+            subj_logger.exception(f"Error running @afni_refacer_run on {primary.name}\n{err}")
         else:
             subj_logger.info(f"@afni_refacer_run command completed on {primary.name}\n")
 
@@ -171,47 +188,36 @@ def run_afni_refacer(primary_t1, others, subj_input_dir, sess_id, output_dir, mo
 
         else:
             subj_logger.error(
-                f"@afni_refacer_run work directory not found. Most probably because the refacer command failed.")
+                f"AFNI refacer's work directory not found. Most probably because the refacer command failed.")
             missing_refacer_out = prefix
 
         return missing_refacer_out
 
 
-def deface_primary_scan(input_bids_dir, subj_input_dir, sess_dir, mapping_dict, output_dir, mode, no_clean, nih_hpc):
-    defacing_log = output_dir / 'logs' / 'defacing_pipeline.log'
-    if not defacing_log.parent.exists():
-        defacing_log.parent.mkdir(parents=True, exist_ok=True)
-    main_logger = utils.setup_logger(defacing_log)
-    if nih_hpc:
-        out, err = utils.run_command("module load afni ; module load fsl")
-        if err:
-            main_logger.error(f"Error loading AFNI and/or FSL modules.\n{err}")
-        else:
-            main_logger.info(f"AFNI and FSL modules loaded successfully.\n")
-
+def deface_primary_scan(bids_input_dir, subj_dir, sess_dir, mapping_dict, bids_output_dir, mode, no_clean):
     missing_refacer_outputs = []  # list to capture missing afni refacer workdirs
 
-    subj_id = Path(subj_input_dir).name
+    subj_id = Path(subj_dir).name
     sess_id = Path(sess_dir).name if sess_dir else ""
 
     if not sess_id:
-        subj_level_logger = utils.setup_logger(output_dir / 'logs' / f'{subj_id}_defacing.log')
+        log_filepath = bids_output_dir.parent / 'logs' / f'{subj_id}_defacing.log'
         primary_t1 = mapping_dict[subj_id]['primary_t1']
         others = [str(s) for s in mapping_dict[subj_id]['others'] if s != primary_t1]
-        subj_level_logger.info(f"Command logs at {output_dir / 'logs' / f'{subj_id}_defacing.log'}\n.")
-        missing_refacer_outputs.append(
-            run_afni_refacer(primary_t1, others, subj_input_dir, "", output_dir, mode, subj_level_logger))
-        subj_level_logger.info(f"Reorganizing {subj_input_dir} with defaced images into BIDS tree\n")
+
     else:
-        subj_level_logger = utils.setup_logger(output_dir / 'logs' / f'{subj_id}_{sess_id}_defacing.log')
+        log_filepath = bids_output_dir.parent / 'logs' / f'{subj_id}_{sess_id}_defacing.log'
         primary_t1 = mapping_dict[subj_id][sess_id]['primary_t1']
         others = [str(s) for s in mapping_dict[subj_id][sess_id]['others'] if s != primary_t1]
-        subj_level_logger.info(f"Command logs at {output_dir / 'logs' / f'{subj_id}_{sess_id}_defacing.log'}\n.")
-        missing_refacer_outputs.append(
-            run_afni_refacer(primary_t1, others, subj_input_dir, sess_id, output_dir, mode, subj_level_logger))
-        subj_level_logger.info(f"Reorganizing {sess_dir} with defaced images into BIDS tree...\n")
+
+    subj_level_logger = setup_logger(log_filepath)
+    subj_level_logger.info(f"Command logs at {log_filepath}\n")
+    missing_refacer_outputs.append(
+        run_afni_refacer(primary_t1, others, bids_input_dir, sess_id, bids_output_dir, mode, subj_level_logger))
 
     # reorganizing the directory with defaced images into BIDS tree
-    reorganize_into_bids(input_bids_dir, subj_input_dir, sess_dir, primary_t1, output_dir, no_clean, subj_level_logger)
+    subj_level_logger.info(f"Reorganizing {subj_id} {sess_id} with defaced images into BIDS tree\n")
+    reorganize_into_bids(bids_input_dir, subj_dir, sess_dir, primary_t1, bids_output_dir, no_clean,
+                         subj_level_logger)
 
     return missing_refacer_outputs
