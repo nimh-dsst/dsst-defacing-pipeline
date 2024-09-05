@@ -1,0 +1,6 @@
+filename	acq_time	operator	randstr
+fmap/sub-01_ses-012_dir-AP_run-1_epi.nii.gz	2012-10-22T17:02:17.655000	n/a	e2abe258
+fmap/sub-01_ses-012_dir-AP_run-2_epi.nii.gz	2012-10-22T17:07:58.642500	n/a	c9dbc904
+fmap/sub-01_ses-012_dir-PA_run-1_epi.nii.gz	2012-10-22T17:09:13.425000	n/a	00fe9883
+anat/sub-01_ses-012_T1w.nii.gz	2012-10-22T17:12:24.297500	n/a	65111af0
+anat/sub-01_ses-012_T2w.nii.gz	2012-10-22T17:19:30.930000	n/a	15c73a82
