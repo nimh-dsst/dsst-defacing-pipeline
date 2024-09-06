@@ -113,7 +113,7 @@ def main():
         session_labels = [s.split('-')[1] if s.startswith('ses-') else s for s in args.session_id]
 
     ## run generate mapping script
-    mapping_dict = generate_mappings.crawl(bids_input_dir, output_dir)
+    mapping_dict = generate_mappings.crawl(bids_input_dir, output_dir, main_logger)
     main_logger.info(f"Mapping file at {str(output_dir / 'primary_to_others_mapping.json')} ")
     main_logger.info(f"Logs at {str(output_dir / 'logs')}\n")
 

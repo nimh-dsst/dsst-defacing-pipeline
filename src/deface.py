@@ -52,7 +52,7 @@ def rename_afni_workdir(workdir_path, subj_logger):
 
 
 def copy_over_sidecar(scan_filepath, input_anat_dir, output_anat_dir):
-    prefix = '_'.join([i for i in re.split('_|\.', scan_filepath.name) if i not in ['defaced', 'nii', 'gz']])
+    prefix = '_'.join([i for i in re.split('_|.', scan_filepath.name) if i not in ['defaced', 'nii', 'gz']])
     filename = prefix + '.json'
     json_sidecar = input_anat_dir / filename
     shutil.copy2(json_sidecar, output_anat_dir / filename)
