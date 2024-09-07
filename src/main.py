@@ -131,13 +131,16 @@ def main():
             if not to_deface:  # if no sess_dir found
                 to_deface.extend([bids_input_dir.joinpath(f'sub-{p}')])
 
+    elif not participant_labels and session_labels:
+        # for all subjects and one subset of sessions
+        for s in session_labels:
+            to_deface.extend(list(bids_input_dir.rglob(f'ses-{s}')))
+
     elif participant_labels and session_labels:
         # for one subject or list of subjects and a specific session, if present
         for p in participant_labels:
             for s in session_labels:
                 to_deface.extend(list(bids_input_dir.joinpath(f'sub-{p}/ses-{s}/')))
-                if not to_deface:
-                    to_deface = list(bids_input_dir.joinpath(f'sub-{p}/ses-{s}/'))
 
     elif not participant_labels and not session_labels:
         # only for one subset of sessions
@@ -151,6 +154,10 @@ def main():
             to_deface = session_list
         else:  # for all subjects (without "ses-*" session directories)
             to_deface = list(bids_input_dir.glob('sub-*'))
+
+    # exclude certain path patterns like dot directories
+    excl_patterns = ['.']
+    to_deface = [d for d in to_deface if not str(d).startswith(tuple(excl_patterns))]
 
     # running processing style
     if args.n_cpus == 1:
