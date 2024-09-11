@@ -51,7 +51,7 @@ def setup_logger(log_filepath):
 
     # setup formatters
     brief_formatter = logging.Formatter('%(levelname)s: %(message)s')
-    precise_formatter = logging.Formatter(fmt='%(asctime)s line %(lineno)d: %(message)s',
+    precise_formatter = logging.Formatter(fmt='%(asctime)s %(module)s L%(lineno)d: %(message)s',
                                           datefmt='%Y-%m-%d %H:%M:%S%z')
 
     # setup file handler
