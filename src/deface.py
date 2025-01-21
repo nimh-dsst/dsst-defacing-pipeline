@@ -171,13 +171,13 @@ def run_afni_refacer(primary_t1, others, subj_input_dir, sess_dir, output_dir, m
 
         prefix = primary.name.split('.')[0]  # filename without the extension
 
-        subj_outdir.mkdir(parents=True, exist_ok=True)  # make output directories within subject directory
+        subj_output_dir.mkdir(parents=True, exist_ok=True)  # make output directories within subject directory
         # construct afni refacer commands
         if mode == 'aggressive':
-            refacer_cmd = f"@afni_refacer_run -input {primary_t1} -mode_deface -no_clean -prefix {fspath(subj_outdir / prefix)} -shell afni_refacer_shell_sym_2.0.nii.gz"
+            refacer_cmd = f"@afni_refacer_run -input {primary_t1} -mode_deface -no_clean -prefix {fspath(subj_output_dir / prefix)} -shell afni_refacer_shell_sym_2.0.nii.gz"
 
         else:
-            refacer_cmd = f"@afni_refacer_run -input {primary_t1} -mode_deface -no_clean -prefix {fspath(subj_outdir / prefix)}"
+            refacer_cmd = f"@afni_refacer_run -input {primary_t1} -mode_deface -no_clean -prefix {fspath(subj_output_dir / prefix)}"
 
 
         # TODO remove module load afni
