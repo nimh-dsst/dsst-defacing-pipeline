@@ -281,4 +281,3 @@ dependencies:
     - threadpoolctl==3.1.0
     - visualqc==0.6.6
     - wrapt==1.15.0
-prefix: /data/NIMH_scratch/arshithab/miniconda3/envs/dsstdeface
