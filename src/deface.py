@@ -141,7 +141,7 @@ def reorganize_into_bids(input_bids_dir, subj_id, sess_id, primary_scan, bids_de
             shutil.rmtree(intermediate_files_dir)
 
 
-def run_afni_refacer(primary_t1, others, subj_input_dir, sess_dir, output_dir, mode):
+def run_afni_refacer(primary_t1, others, subj_input_dir, sess_id, output_dir, mode):
     # constructing afni refacer command
     subj_id = subj_input_dir.name
 
