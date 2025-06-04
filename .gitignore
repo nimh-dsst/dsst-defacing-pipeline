@@ -7,3 +7,5 @@ examples/visualqc_prep/
 examples/sub-01/
 lookup.json
 rename.py
+.DS_Store
+test_datasets/.DS_Store

@@ -1,1 +1,0 @@
-visualqc_t1_mri -u /Users/arshithab/Desktop/OneDesk/Projects/dsst-defacing-pipeline/examples/visualqc_prep/t1_mri -i /Users/arshithab/Desktop/OneDesk/Projects/dsst-defacing-pipeline/examples/visualqc_prep/id_list_t1.txt -m primary.nii.gz

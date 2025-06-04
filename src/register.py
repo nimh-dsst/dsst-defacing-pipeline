@@ -1,32 +1,27 @@
-import subprocess
+import utils
 
 
-def run_command(cmdstr, logfile):
-    if not logfile:
-        logfile = subprocess.PIPE
-    subprocess.run(cmdstr, stdout=logfile, stderr=subprocess.STDOUT, encoding='utf8', shell=True)
-
-
-def preprocess_facemask(fmask_path, logfile_obj):
+def preprocess_facemask(fmask_path, subj_logger):
     prefix = fmask_path.parent.joinpath('afni_facemask')
     defacemask = fmask_path.parent.joinpath('afni_defacemask.nii.gz')
-
-    # load fsl module
-    c0 = f"module load fsl"
 
     # split the 4D volume
     c1 = f"fslroi {fmask_path} {prefix} 1 1"
 
     # arithmetic on the result from above
     c2 = f"fslmaths {prefix}.nii.gz -abs -binv {defacemask}"
-    print(f"Generating a defacemask... \n ")
-    run_command('; '.join([c0, c1, c2]), logfile_obj)
+    subj_logger.info(f"Generating a defacemask\n")
+    out, err = utils.run_command('; '.join([c1, c2]))
+    subj_logger.info(out)
+    if err:
+        subj_logger.error(err)
+        raise Exception(f"Error in generating deface mask: {err}")
     try:
         if defacemask.exists():
             return defacemask
     except OSError as err:
-        print(f"OS Error: {err}")
-        print(
+        subj_logger.error(f"OS Error: {err}")
+        subj_logger.error(
             f"Cannot find the binarized facemask. Please check is fsl module is loaded before running the script again.")
         raise
 
@@ -39,17 +34,15 @@ def get_intermediate_filenames(outdir, prefix):
     return mat, reg_out, mask, defaced_out
 
 
-def register_to_primary_scan(subj_dir, afni_workdir, primary_scan, other_scans_list, log_fileobj):
-    log_fileobj.flush()
+def register_to_primary_scan(subj_dir, afni_workdir, primary_scan, other_scans_list, subj_logger):
     modality = "anat"
 
     # preprocess facemask
     raw_facemask_volumes = afni_workdir.joinpath('tmp.05.sh_t2a_thr.nii')
-    t1_mask = preprocess_facemask(raw_facemask_volumes, log_fileobj)
+    t1_mask = preprocess_facemask(raw_facemask_volumes, subj_logger)
 
     if other_scans_list:
         for other in other_scans_list:
-            log_fileobj.flush()
             entities = other.split('_')
 
             # changing other scan name to other scan full path
@@ -69,7 +62,11 @@ def register_to_primary_scan(subj_dir, afni_workdir, primary_scan, other_scans_l
 
             mask_cmd = f"fslmaths {other} -mas {other_mask} {other_defaced}"
 
-            full_cmd = " ; ".join(["module load fsl", cp_cmd, flirt_cmd, applyxfm_cmd, mask_cmd]) + '\n'
+            full_cmd = " ; ".join([cp_cmd, flirt_cmd, applyxfm_cmd, mask_cmd]) + '\n'
 
-            print(f"Registering {other.name} to {primary_scan.name} and applying defacemask...")
-            run_command(full_cmd, log_fileobj)
+            subj_logger.info(f"Registering {other.name} to {primary_scan.name} and applying defacemask...")
+            out, err = utils.run_command(full_cmd)
+            subj_logger.info(out)
+            if err:
+                subj_logger.error(err)
+                raise Exception(f"Error in registering {other.name} to {primary_scan.name}: {err}")
