@@ -1,8 +1,10 @@
 #!/usr/local/bin/python3
 """Generates Primary to "others" mapping file and prints VisualQC's T1 MRI utility command.
 
+
     Terminology
     -----------
+
     "primary scan" : Best quality T1w scan, ideally. If T1s not available, we'll need another strategy to pick a primary scan.
     "other scans" : Apart from the primary scan, every "other" scan within the subject-session anat directory is considered a secondary or "other" scan.
 
@@ -13,11 +15,24 @@
 
 import json
 import random
+import subprocess
 from collections import defaultdict
 from pathlib import Path
 
 
-def sort_by_acq_time(sidecars, logger):
+def run_command(cmdstr, logfile):
+    """Runs the given command str as shell subprocess. If logfile object is provided, then the stdout and stderr of the
+    subprocess is written to the log file.
+
+    :param str cmdstr: A shell command formatted as a string variable.
+    :param io.TextIOWrapper logfile: optional, File object to log the stdout and stderr of the subprocess.
+    """
+    if not logfile:
+        logfile = subprocess.PIPE
+    subprocess.run(cmdstr, stdout=logfile, stderr=subprocess.STDOUT, encoding='utf8', shell=True)
+
+
+def sort_by_acq_time(sidecars):
     """Sorting a list of scans' JSON sidecars based on their acquisition time.
 
     :param list sidecars: A list of JSON sidecars for all T1w scans in within a session.
